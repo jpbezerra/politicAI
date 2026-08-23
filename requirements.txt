@@ -1,0 +1,18 @@
+pandas>=2.0
+numpy>=1.26
+matplotlib>=3.8
+seaborn>=0.13
+scipy>=1.11
+
+# apenas para regenerar/executar os notebooks a partir dos scripts (não é
+# necessário só para abrir os .ipynb já prontos no Jupyter/VS Code)
+nbformat>=5.9
+nbclient>=0.9
+ipykernel>=6.29
+jupyter_client>=8.6
+
+# apenas para rodar os scrapers HTTP de reprodução independente
+# (scripts/scrape_dataset_a_http.py e scrape_dataset_b_http.py) --
+# não são necessários para nada mais neste repositório
+requests>=2.31
+beautifulsoup4>=4.12

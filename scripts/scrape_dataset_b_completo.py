@@ -38,13 +38,28 @@ delay entre requisições para não sobrecarregar o servidor do Aos Fatos):
 É normal parecer "parado" por alguns segundos entre cada item — ele está
 esperando de propósito (DELAY_ITEM) para ser educado com o servidor.
 
-LIMITAÇÃO CONHECIDA: o casamento entre cada checagem (veredito/tema, extraído
-do texto da listagem pelo parser já validado) e sua URL individual é feito
-por POSIÇÃO na página (a ordem em que os links de artigo aparecem no HTML
-deveria ser a mesma ordem em que os blocos de texto aparecem). O script
-verifica essa contagem em cada página e AVISA no terminal se os números não
-baterem — se isso acontecer em alguma página, me mande o aviso completo que
-eu ajusto a lógica de extração de links.
+HISTÓRICO DE BUG CORRIGIDO (v2): a primeira versão deste script tentava
+reaproveitar o parser de texto puro (`parse_page`, validado contra o texto
+colado manualmente do navegador) sobre o texto extraído via
+`BeautifulSoup(html).get_text()`. Isso falhava 100% das vezes (0 itens
+parseados em toda página testada) porque o site usa classes CSS Tailwind
+como `lowercase` para EXIBIR os selos em minúsculo, mas o texto real no HTML
+é `"Checagem"` (C maiúsculo) — o parser comparava com `"checagem"` exato e
+nunca batia. Confirmado inspecionando o HTML bruto salvo por
+`debug_dump_html.py`. A v2 abaixo lê a estrutura real do HTML (elementos e
+classes, não texto solto) e foi validada com sucesso contra uma página real
+antes de ser entregue — 12/12 itens extraídos corretamente, batendo com os
+títulos/veredito/tema já conhecidos.
+
+Estrutura real de cada card na listagem (Next.js/Tailwind):
+  <a class="absolute ... bg-transparent" href="/noticias/<slug>/" title="<título exato>"></a>
+  ... (ícone/selo do veredito, ex.: <span>falso</span>) ...
+  <a href="/noticias/?canal=<tema>">Tema Com Maiúsculas</a>
+  <a href="/noticias/?formato=checagem">Checagem</a>
+  <p>título (redundante com o atributo title acima)</p>
+O link de overlay (`<a title="...">`) é filho direto do container do card —
+por isso `overlay.parent` já é o escopo certo para buscar veredito/tema
+dentro dele, sem precisar adivinhar a classe exata do card.
 """
 import csv
 import re
@@ -55,12 +70,14 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
-# reaproveita o parser de veredito/tema/titulo ja validado contra os 553 itens
-from parse_dataset_b import parse_page  # noqa: F401
+# reaproveita só o vocabulario de veredito, ja validado contra os 553 itens
+from parse_dataset_b import VEREDITO_VOCAB  # noqa: F401
 
 BASE_URL = "https://www.aosfatos.org/noticias/"
 LAST_PAGE_RE = re.compile(r"[?&]page=(\d+)")
 ARTIGO_HREF_RE = re.compile(r"^/noticias/[a-z0-9\-]+/$")
+CANAL_HREF_RE = re.compile(r"^/noticias/\?canal=")
+FORMATO_CHECAGEM_RE = re.compile(r"formato=checagem")
 DATA_LINHA_RE = re.compile(
     r"^\d{1,2} de [a-zàáâãéêíóôõúç]+ de \d{4},\s*\d{2}:\d{2}$", re.IGNORECASE
 )
@@ -79,8 +96,10 @@ def fetch(url, session, params=None):
 
 
 def find_last_page(html):
-    """Mesma lógica usada em scrape_dataset_b_http.py: lê o maior número de
-    página presente na navegação de paginação da listagem."""
+    """Lê o maior número de página presente no <nav aria-label="Pagination">
+    real da listagem (confirmado existir e conter <a href> reais com
+    ?page=N, distinto do payload JSON do Next.js que também menciona
+    "page=" mas não é DOM navegável)."""
     soup = BeautifulSoup(html, "html.parser")
     nav = soup.find("nav", attrs={"aria-label": re.compile("pagina", re.I)}) or soup
     pages = [int(m.group(1)) for a in nav.find_all("a", href=True)
@@ -88,18 +107,34 @@ def find_last_page(html):
     return max(pages) if pages else 1
 
 
-def extrair_links_artigos(html):
-    """Extrai os hrefs de checagem na mesma ordem em que aparecem no HTML —
-    essa ordem deve corresponder à ordem de leitura que parse_page() usa
-    sobre o texto da página, permitindo casar os dois por posição."""
+def extrair_itens_pagina(html):
+    """Extrai (titulo, veredito, tema, url) de cada card real da listagem,
+    lendo a estrutura do HTML em vez de comparar texto solto (ver docstring
+    do módulo para o porquê da v1 ter falhado)."""
     soup = BeautifulSoup(html, "html.parser")
-    hrefs, vistos = [], set()
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        if ARTIGO_HREF_RE.match(href) and href not in vistos:
-            hrefs.append(href)
-            vistos.add(href)
-    return hrefs
+    itens = []
+    for overlay in soup.select("a.absolute.bg-transparent[title]"):
+        href = overlay.get("href", "")
+        titulo = (overlay.get("title") or "").strip()
+        if not ARTIGO_HREF_RE.match(href) or not titulo:
+            continue
+        card = overlay.parent
+        if card is None or not card.find("a", href=FORMATO_CHECAGEM_RE):
+            continue  # nao e um card de checagem (ex.: card de "reportagem")
+
+        texto_card = card.get_text(" ", strip=True).lower()
+        veredito = next((v for v in VEREDITO_VOCAB if v in texto_card), "")
+
+        tema_link = card.find("a", href=CANAL_HREF_RE)
+        tema = tema_link.get_text(strip=True).lower() if tema_link else ""
+
+        itens.append({
+            "titulo": titulo,
+            "veredito": veredito,
+            "tema": tema,
+            "url": "https://www.aosfatos.org" + href,
+        })
+    return itens
 
 
 def extrair_data_e_texto(html):
@@ -126,25 +161,15 @@ def scrape_tag_completo(tag):
             time.sleep(DELAY_LISTAGEM)
             html = fetch(BASE_URL, session, params={"formato": "checagem", "tag": tag, "page": page})
 
-        page_text = BeautifulSoup(html, "html.parser").get_text(separator="\n")
-        itens_parseados = parse_page(page_text)
-        hrefs = extrair_links_artigos(html)
-
-        if len(hrefs) != len(itens_parseados):
-            print(f"  AVISO pagina {page}: {len(hrefs)} link(s) de artigo vs {len(itens_parseados)} "
-                  f"item(ns) parseado(s) pelo texto -- descasamento! Os itens desta pagina ficarao "
-                  f"sem URL/data (nao vou arriscar casar errado). Me avise deste aviso.")
-            for item in itens_parseados:
-                item["url"] = ""
-        else:
-            for item, href in zip(itens_parseados, hrefs):
-                item["url"] = "https://www.aosfatos.org" + href
+        itens_parseados = extrair_itens_pagina(html)
+        if not itens_parseados:
+            print(f"  AVISO pagina {page}: 0 itens extraidos -- a estrutura do HTML pode ter mudado "
+                  f"desde que este script foi escrito (23/08/2026). Me manda esse aviso que eu ajusto.")
 
         for item in itens_parseados:
             item["tag_pesquisa"] = tag
         todos_itens.extend(itens_parseados)
-        print(f"  pagina {page}/{last_page}: {len(itens_parseados)} itens "
-              f"({sum(1 for i in itens_parseados if i['url'])} com URL)")
+        print(f"  pagina {page}/{last_page}: {len(itens_parseados)} itens extraidos")
 
     com_url = [i for i in todos_itens if i["url"]]
     print(f"Tag {tag!r}: {len(todos_itens)} itens no total, {len(com_url)} com URL valida. "

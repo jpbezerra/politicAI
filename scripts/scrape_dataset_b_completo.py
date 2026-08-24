@@ -51,6 +51,21 @@ classes, não texto solto) e foi validada com sucesso contra uma página real
 antes de ser entregue — 12/12 itens extraídos corretamente, batendo com os
 títulos/veredito/tema já conhecidos.
 
+HISTÓRICO DE BUG CORRIGIDO (v3): a v2 corrigiu a listagem, mas a extração de
+DATA na página individual (`extrair_data_e_texto`) continuou em 0% de sucesso
+mesmo com URL e texto completo corretos — confirmado nos 3 CSVs reais
+devolvidos pelo usuário (inteligencia-artificial, eleicoes-2022, eleicoes-2026:
+0/553 com data capturada). Causa: `soup.get_text(separator="\n")` quebra
+"20 de agosto de 2026, 15:57" em **3 linhas separadas** — "20 de agosto de
+2026", "," e "15:57" — porque a vírgula e o espaço que a separam da hora ficam
+em nós de texto HTML próprios (o nó "só espaço" vira linha vazia e some no
+filtro `if l.strip()`). A regex antiga (`DATA_LINHA_RE`) exigia data e hora
+numa única linha e por isso nunca batia, embora o texto estivesse lá.
+Confirmado inspecionando `texto_completo` de exemplos reais dos 3 CSVs (mesmo
+padrão nos 3 arquivos). A v3 abaixo procura essa sequência de 3 linhas
+consecutivas (data, ",", hora), mantendo o casamento de linha única como
+fallback caso o site mude o layout de novo.
+
 Estrutura real de cada card na listagem (Next.js/Tailwind):
   <a class="absolute ... bg-transparent" href="/noticias/<slug>/" title="<título exato>"></a>
   ... (ícone/selo do veredito, ex.: <span>falso</span>) ...
@@ -81,6 +96,8 @@ FORMATO_CHECAGEM_RE = re.compile(r"formato=checagem")
 DATA_LINHA_RE = re.compile(
     r"^\d{1,2} de [a-zàáâãéêíóôõúç]+ de \d{4},\s*\d{2}:\d{2}$", re.IGNORECASE
 )
+DATA_MES_RE = re.compile(r"^\d{1,2} de [a-zàáâãéêíóôõúç]+ de \d{4}$", re.IGNORECASE)
+DATA_HORA_RE = re.compile(r"^\d{2}:\d{2}$")
 USER_AGENT = "Mozilla/5.0 (pesquisa-academica; contato: ver README do repositorio)"
 DELAY_LISTAGEM = 1.0
 DELAY_ITEM = 1.0
@@ -138,12 +155,27 @@ def extrair_itens_pagina(html):
 
 
 def extrair_data_e_texto(html):
-    """Extrai a data de publicação (linha 'DD de <mês> de AAAA, HH:MM' perto
-    do topo do artigo) e o texto completo do corpo da página."""
+    """Extrai a data de publicação ('DD de <mês> de AAAA, HH:MM' perto do topo
+    do artigo) e o texto completo do corpo da página.
+
+    A data quase sempre chega como 3 linhas consecutivas depois do
+    get_text(separator="\\n") -- "20 de agosto de 2026", "," e "15:57" --
+    porque a vírgula/espaço entre data e hora estão em nós de texto HTML
+    separados (ver "HISTÓRICO DE BUG CORRIGIDO (v3)" no topo do módulo).
+    Mantemos o casamento de linha única como fallback."""
     soup = BeautifulSoup(html, "html.parser")
     texto = soup.get_text(separator="\n")
     linhas = [l.strip() for l in texto.split("\n") if l.strip()]
-    data_publicacao = next((l for l in linhas if DATA_LINHA_RE.match(l)), "")
+
+    data_publicacao = ""
+    for i in range(len(linhas) - 2):
+        if (DATA_MES_RE.match(linhas[i]) and linhas[i + 1] == ","
+                and DATA_HORA_RE.match(linhas[i + 2])):
+            data_publicacao = f"{linhas[i]}, {linhas[i + 2]}"
+            break
+    if not data_publicacao:
+        data_publicacao = next((l for l in linhas if DATA_LINHA_RE.match(l)), "")
+
     return data_publicacao, texto
 
 

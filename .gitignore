@@ -22,3 +22,7 @@ Thumbs.db
 # Segredos / config local (nao ha nenhum neste projeto hoje, mas por seguranca)
 .env
 *.env.local
+
+# Artefato de diagnostico (usado so para achar o bug de parsing de scrape_dataset_b_completo.py,
+# nao faz parte do pipeline nem dos dados do estudo)
+data/raw/_debug_pagina1.html

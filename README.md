@@ -87,6 +87,7 @@ A deduplicação é por título exato (normalizando aspas tipográficas retas/cu
 - `rotulo_ia`, `veredito_estimado`, `categoria_macro` e `alvo_ataque` (gerados no notebook 01) são **heurísticas textuais** sobre título+resumo, não classificações oficiais — precisam de validação manual amostral antes de testes inferenciais definitivos.
 - Todas as tags (originais e adicionais) vêm do mesmo agregador e das mesmas 10 agências — a expansão aumenta volume, não diversifica a fonte. Diversidade de fonte vem do Dataset B.
 - Cobertura total do site: 322 dos 462 itens (os ~140 restantes são majoritariamente alertas de golpe financeiro/phishing, fora do escopo temático).
+- **O dataset não tem nenhum item real de desinformação por IA (`rotulo_ia_bin` = 0% "IA") — verificado ao vivo, não só nos dados já baixados.** Além do teste de vocabulário ampliado dentro do notebook (Seção 3.1.1), voltamos ao site do TSE em navegação real para checar (a) se existe alguma tag entre as 68 disponíveis dedicada a IA/deepfake — não existe — e (b) uma busca textual no acervo completo (462 itens, não só os 322 coletados) por termos como "inteligência artificial", "deepfake", "clonagem de voz", "ChatGPT" etc. Os poucos resultados já estavam entre os 322 itens coletados (a menção a IA fica no corpo do texto, não no título/resumo) ou apontavam para conteúdo externo ao site do TSE. Conclusão: não há dado novo e real para adicionar a partir desta fonte — só o Dataset B (Aos Fatos) tem checagens reais rotuladas como IA (122 itens, ver abaixo).
 
 ## Dataset B — Arquivo de checagens do Aos Fatos
 
@@ -112,8 +113,8 @@ A tag `eleicoes-2022` começou como uma amostra de 7 páginas (84 itens) e foi a
 
 Ambos os notebooks já vêm **executados**, com outputs e gráficos embutidos — não é preciso rodar nada para ver os resultados, só abrir no Jupyter, VS Code ou GitHub (que renderiza `.ipynb` nativamente).
 
-- **`01_dataset_a_fato_ou_boato_eda.ipynb`**: carga do Dataset A completo (322 itens), limpeza, engenharia de features heurísticas (rótulo IA, veredito estimado, categoria temática, alvo do ataque, dias até a eleição), EDA descritiva, teste qui-quadrado exploratório (preview de H2/H4), visualizações, e exportação para `data/processed/dataset_a_fato_ou_boato_enriquecido.csv`.
-- **`02_dataset_b_aosfatos_eda.ipynb`**: carga do Dataset B (553 itens), limpeza, engenharia de features (rótulo de grupo real, vetor de mídia heurístico, alvo do ataque heurístico), EDA descritiva, testes qui-quadrado exploratórios (preview de H2/H4) usando o rótulo editorial real, comparação com a heurística do Dataset A, e exportação para `data/processed/dataset_b_aosfatos_enriquecido.csv`.
+- **`01_dataset_a_fato_ou_boato_eda.ipynb`**: carga do Dataset A completo (322 itens), limpeza, engenharia de features heurísticas (rótulo IA, veredito estimado, categoria temática, alvo do ataque, **vetor de mídia**, dias até a eleição). Inclui uma investigação dedicada ao achado de que 0% dos itens foi rotulado como IA (testado contra um vocabulário ampliado, não é falso negativo de regex), a revisão da heurística de veredito que dobrou a cobertura de classificação (24,5% → ~56%, com o antes/depois documentado no próprio notebook), um teste de efeito de seleção entre a tag "fake news" e as 7 tags adicionais, um preview visual de H5 (volume mensal com as datas de eleição marcadas) e um raio-x de termos mais frequentes nos títulos. Termina exportando para `data/processed/dataset_a_fato_ou_boato_enriquecido.csv`.
+- **`02_dataset_b_aosfatos_eda.ipynb`**: carga do Dataset B (553 itens), limpeza, engenharia de features (rótulo de grupo real, vetor de mídia heurístico revisado, alvo do ataque heurístico revisado). Inclui uma checagem de contaminação entre tags (0 títulos duplicados entre `tag_pesquisa`s, confirmando que `rotulo_grupo` pode ser atribuído com segurança), uma análise de cobertura do campo `tema`, testes qui-quadrado com V de Cramér para os previews de H2 e H4 — incluindo o teste sobre `veredito`, que é classificação editorial real, não heurística (IA: 99,2% "falso" vs. Tradicional: 81,0%) — e uma seção de validação cruzada que compara `vetor_midia` entre o Dataset A inteiro, o subgrupo Tradicional do Dataset B e o subgrupo IA do Dataset B (as duas baselines Tradicional convergem entre si de forma independente, e o grupo IA se destaca claramente das duas). Fecha com uma checagem de sobreposição de título com o Dataset A (preview do Dataset C) e exportação para `data/processed/dataset_b_aosfatos_enriquecido.csv`.
 
 ## Comprovação da coleta: evidência bruta vs. scripts de reprodução independente
 
@@ -142,6 +143,21 @@ python3 scripts/scrape_dataset_b_http.py inteligencia-artificial  # -> data/raw/
 ```
 
 Eles gravam em arquivos `scrape_http_*.csv` separados (nunca sobrescrevem `dataset_a_fato_ou_boato.csv` nem `dataset_b_aosfatos.csv`), para que a comparação linha a linha com os dados originais seja explícita em vez de uma substituição silenciosa.
+
+### `scrape_dataset_b_completo.py` — coleta real de data + texto completo (Dataset B)
+
+O Dataset B tem uma limitação conhecida: a listagem do Aos Fatos não expõe a data de publicação por item (só título, veredito e tema) — o que impedia qualquer análise de H3/H5 neste dataset. A data (e o texto completo da checagem) **existe**, só que só aparece na página individual de cada checagem, uma por uma — confirmado navegando manualmente até uma checagem real (`aosfatos.org/noticias/tancredo-ulysses-bolsonaro/`), que mostra "20 de agosto de 2026, 15:57" logo no topo.
+
+Como isso significa visitar cada uma das 553 checagens individualmente (não só as ~47 páginas de listagem), e nem o sandbox do Claude nem a VM isolada do Cowork (usada por `device_bash`) conseguem sair para a internet (as duas retornam o mesmo `ProxyError: 403 Forbidden` ao tentar acessar `aosfatos.org`), este script foi escrito para **rodar no seu computador**, fora dessas sandboxes:
+
+```bash
+pip install requests beautifulsoup4
+python scripts/scrape_dataset_b_completo.py inteligencia-artificial   # ~3-5 min, 122 itens
+python scripts/scrape_dataset_b_completo.py eleicoes-2022             # ~15-25 min, 419 itens
+python scripts/scrape_dataset_b_completo.py eleicoes-2026             # ~1 min, 12 itens
+```
+
+Cada execução salva `data/raw/dataset_b_completo_<tag>.csv` com `titulo, veredito, tema, tag_pesquisa, url, data_publicacao, texto_completo`. O casamento entre cada bloco de texto (veredito/tema, via o parser já validado) e sua URL individual é feito por posição na página — o script verifica essa contagem em cada página de listagem e avisa no terminal se algo não bater, em vez de arriscar casar errado. Depois de rodar, os CSVs alimentam uma nova versão do notebook `02` com datas reais e features recalculadas a partir do texto completo (não só do título).
 
 ## Como reproduzir
 

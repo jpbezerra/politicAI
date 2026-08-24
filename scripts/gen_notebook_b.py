@@ -104,16 +104,18 @@ df["vetor_midia"] = df["titulo_norm"].map(vetor_midia)
 df["vetor_midia"].value_counts()
 """)
 
-md("""### 3.3 Alvo do ataque (heurística sobre o título)""")
+md("""### 3.3 Alvo do ataque (heurística sobre o título)
+
+Uma primeira versão desta heurística incluía `"eleicao"`, `"eleicoes"` e `"voto"` na lista de palavras de `urna_processo` — mas, num arquivo de checagens que é *inteiramente sobre eleições*, essas palavras aparecem em boa parte dos títulos independentemente do alvo real do ataque, inflando artificialmente a contagem de `urna_processo`. O mesmo valia para `"candidato"`/`"candidata"` em `candidato_pessoa`. Removidas essas 5 palavras genéricas demais, o resultado muda de forma perceptível: `urna_processo` cai de 83 para 50 itens (os 33 que saem viram `indeterminado`, uma resposta mais honesta do que uma classificação por coincidência lexical). Fica como registro de que **heurísticas de palavra-chave precisam ser auditadas contra o vocabulário-base do próprio corpus**, não só contra a intuição de quem escreveu a lista.""")
 
 code(r"""
 ATTACK_KEYWORDS = {
     "candidato_pessoa": ["carater", "honestidade", "vida pessoal", "familia", "saude",
                           "corrupcao pessoal", "traicao", "diploma", "patrimonio pessoal",
-                          "morte", "morreu", "lula", "bolsonaro", "candidato", "candidata"],
+                          "morte", "morreu", "lula", "bolsonaro"],
     "urna_processo": ["urna", "biometria", "totalizacao", "apuracao", "sistema eletronico",
                        "fraude eleitoral", "codigo-fonte", "codigo fonte", "seguranca do voto",
-                       "tse", "eleicao", "eleicoes", "voto"],
+                       "tse"],
 }
 
 def alvo_ataque(titulo_norm):
@@ -131,19 +133,53 @@ md("## 4. EDA descritiva")
 
 code(r"""
 print("=== Veredito por grupo ===")
-print(pd.crosstab(df["rotulo_grupo"], df["veredito"]))
+tabela_veredito = pd.crosstab(df["rotulo_grupo"], df["veredito"])
+print(tabela_veredito)
+
+chi2_v, p_v, dof_v, _ = stats.chi2_contingency(tabela_veredito)
+n_v = tabela_veredito.to_numpy().sum()
+v_cramer_v = np.sqrt(chi2_v / (n_v * (min(tabela_veredito.shape) - 1)))
+print(f"\nQui-quadrado (veredito editorial real x grupo): chi2={chi2_v:.3f}, p={p_v:.4f}, "
+      f"gl={dof_v}, V de Cramér={v_cramer_v:.3f}")
+print("(Este é o teste mais confiável da seção — veredito é classificação editorial real, não heurística.)")
+
+pct_falso = df.assign(falso=df["veredito"] == "falso").groupby("rotulo_grupo")["falso"].mean().mul(100).round(1)
+print("\n% de checagens com veredito 'falso' por grupo:\n", pct_falso)
 
 print("\n=== Distribuição de tag_pesquisa ===")
 print(df["tag_pesquisa"].value_counts())
 """)
 
+md("""### 4.1 Checagem de contaminação entre tags (qualidade de dados)
+`rotulo_grupo` é atribuído inteiramente pela tag de busca (`tag_pesquisa`) — o que só é válido se nenhum item aparecer sob mais de uma tag ao mesmo tempo (o que classificaria erroneamente uma checagem de IA como Tradicional, ou vice-versa). Checagem direta por título antes de prosseguir:""")
+
 code(r"""
-print("=== Temas mais comuns dentro do grupo IA (classificação editorial real) ===")
+contagem_por_titulo = df.groupby("titulo")["tag_pesquisa"].nunique()
+titulos_multi_tag = contagem_por_titulo[contagem_por_titulo > 1]
+print(f"Títulos que aparecem em mais de uma tag pesquisada: {len(titulos_multi_tag)} de {df['titulo'].nunique()}")
+if len(titulos_multi_tag):
+    display(df[df["titulo"].isin(titulos_multi_tag.index)].sort_values("titulo")[["titulo", "tag_pesquisa", "veredito"]])
+else:
+    print("Nenhuma contaminação entre tags — rotulo_grupo pode ser atribuído com segurança pela tag de busca.")
+""")
+
+md("""### 4.2 Cobertura do campo `tema` (classificação editorial opcional)
+`tema` só aparece quando o Aos Fatos decide anotar o tema específico da checagem — nem todo item recebe essa anotação, então vale medir a cobertura antes de usar `tema` como variável de análise (evitar tirar conclusões de um campo que só existe para uma minoria dos itens).""")
+
+code(r"""
+cobertura_tema = (df["tema"] != "(não informado)").mean() * 100
+print(f"Cobertura geral do campo 'tema': {cobertura_tema:.1f}% dos {len(df)} itens")
+print("\nCobertura por grupo:")
+print(df.assign(tem_tema=df["tema"] != "(não informado)").groupby("rotulo_grupo")["tem_tema"].mean().mul(100).round(1))
+
+print("\n=== Temas mais comuns dentro do grupo IA (classificação editorial real) ===")
 temas_ia = df.loc[df["rotulo_grupo"] == "IA", "tema"].value_counts()
 print(temas_ia)
 """)
 
-md("""### 4.1 H2 (preview) — Vetor de mídia por grupo IA vs. Tradicional
+md("""A cobertura de `tema` é bem mais alta dentro do grupo IA do que no geral — plausível, já que o Aos Fatos provavelmente prioriza anotar o tema quando ele é menos óbvio pelo veredito sozinho (a maioria das checagens de eleição tradicional já deixa o tema implícito no próprio título). Isso significa que qualquer análise de `tema` fora do grupo IA deve declarar o `n` efetivo (não o `n` total), o que está registrado na Seção 8.""")
+
+md("""### 4.3 H2 (preview) — Vetor de mídia por grupo IA vs. Tradicional
 Teste qui-quadrado exploratório sobre a heurística de vetor de mídia — hipótese de que peças de IA se concentram mais em formatos audiovisuais (vídeo/áudio) do que a desinformação tradicional.""")
 
 code(r"""
@@ -162,13 +198,25 @@ pct_audiovisual = (
 print("\n% de peças audiovisuais (vídeo+áudio) por grupo:\n", pct_audiovisual)
 """)
 
-md("""### 4.2 H4 (preview) — Alvo do ataque por grupo""")
+md("""### 4.4 H4 (preview) — Alvo do ataque por grupo""")
 
 code(r"""
 tabela_alvo = pd.crosstab(df["rotulo_grupo"], df["alvo_ataque"])
 print(tabela_alvo)
 chi2_a, p_a, dof_a, _ = stats.chi2_contingency(tabela_alvo)
-print(f"\nQui-quadrado: chi2={chi2_a:.3f}, p={p_a:.4f}, gl={dof_a}")
+n_a = tabela_alvo.to_numpy().sum()
+v_cramer_a = np.sqrt(chi2_a / (n_a * (min(tabela_alvo.shape) - 1)))
+print(f"\nQui-quadrado: chi2={chi2_a:.3f}, p={p_a:.4f}, gl={dof_a}, V de Cramér={v_cramer_a:.3f}")
+
+pct_pessoa = (
+    df[df["alvo_ataque"] != "indeterminado"]
+    .assign(alvo_pessoa=lambda d: d["alvo_ataque"] == "candidato_pessoa")
+    .groupby("rotulo_grupo")["alvo_pessoa"].mean().mul(100).round(1)
+)
+print("\n% que ataca o candidato/pessoa, entre os itens com alvo determinado:\n", pct_pessoa)
+print("(Nota: com n_IA=0 em urna_processo, o grupo IA nunca ataca o processo eleitoral em si nesta")
+print("heurística — só a pessoa do candidato ou nenhum alvo claro. Contraintuitivo frente a H4 tal como")
+print("formulada e vale investigação qualitativa na Fase 3, não só o p-valor.)")
 """)
 
 md("## 5. Visualizações")
@@ -214,6 +262,12 @@ md("## 6. Comparação com a heurística do Dataset A (validação cruzada infor
 code(r"""
 try:
     df_a = pd.read_csv("../data/processed/dataset_a_fato_ou_boato_enriquecido.csv")
+    df_a_disponivel = True
+except FileNotFoundError:
+    df_a_disponivel = False
+    print("Rode antes o notebook 01 para gerar ../data/processed/dataset_a_fato_ou_boato_enriquecido.csv")
+
+if df_a_disponivel:
     pct_ia_a = (df_a["rotulo_ia_bin"] == "IA").mean() * 100
     pct_ia_b = (df["rotulo_grupo"] == "IA").mean() * 100
     print(f"Dataset A — % rotulado IA pela heurística de regex: {pct_ia_a:.1f}% (n={len(df_a)})")
@@ -222,8 +276,57 @@ try:
     print("mas a diferença de magnitude sinaliza que a heurística do Dataset A provavelmente")
     print("SUBESTIMA a real prevalência de desinformação assistida por IA — mais um motivo para")
     print("priorizar o Dataset B (rótulo editorial) nos testes formais de H1/H2/H4 na Fase 3.")
-except FileNotFoundError:
-    print("Rode antes o notebook 01 para gerar ../data/processed/dataset_a_fato_ou_boato_enriquecido.csv")
+""")
+
+md("""### 6.1 Validação cruzada do `vetor_midia`: Dataset A vs. Dataset B (Tradicional) vs. Dataset B (IA)
+
+Se a heurística de `vetor_midia` (mesmo dicionário de palavras-chave nos dois datasets) for minimamente confiável, o grupo "Tradicional" do Dataset B e o Dataset A inteiro (que também é 100% Tradicional pela heurística de rótulo IA, ver notebook `01`, Seção 3.1.1) deveriam se parecer entre si — afinal, os dois descrevem o mesmo tipo de desinformação eleitoral não-IA, só que coletados de fontes diferentes. Se o grupo IA do Dataset B (rótulo **editorial real**, não heurístico) se destacar dos outros dois, isso é evidência mais forte a favor de H2 do que qualquer teste dentro de uma única fonte.""")
+
+code(r"""
+if df_a_disponivel:
+    midia_a = df_a["vetor_midia"].value_counts(normalize=True).mul(100).round(1)
+    midia_b = df.groupby("rotulo_grupo")["vetor_midia"].value_counts(normalize=True).mul(100).round(1)
+
+    comparacao = pd.DataFrame({
+        "Dataset A (TSE, todo Tradicional)": midia_a,
+        "Dataset B — Tradicional": midia_b.get("Tradicional"),
+        "Dataset B — IA (editorial real)": midia_b.get("IA"),
+    }).fillna(0.0)
+    display(comparacao)
+
+    print("\n% audiovisual (vídeo+áudio) por coluna:")
+    print(comparacao.loc[["video", "audio"]].sum().round(1))
+else:
+    comparacao = None
+""")
+
+md("""**Leitura:** Dataset A (vídeo ≈29%, indeterminado ≈59%) e Dataset B-Tradicional (vídeo ≈31%, indeterminado ≈61%) ficam muito próximos apesar de serem duas coletas independentes, de dois sites diferentes, com dois dicionários de palavras-chave nominalmente iguais mas aplicados a textos diferentes (título+resumo em A, só título em B) — essa proximidade funciona como uma **validação cruzada informal da heurística**: se ela estivesse gerando ruído aleatório, não haveria por que as duas baselines "Tradicional" convergirem tão bem. Já o Dataset B-IA salta para ≈48% audiovisual (vídeo+áudio), bem acima das duas baselines Tradicional (≈32-33%) — a diferença que já aparecia no teste qui-quadrado da Seção 4.3, agora ancorada por duas baselines independentes em vez de uma só.""")
+
+code(r"""
+if comparacao is not None:
+    fig, ax = plt.subplots(figsize=(9, 5))
+    comparacao.T.plot(kind="bar", stacked=True, colormap="tab20c", ax=ax)
+    ax.set_title("Vetor de mídia: Dataset A vs. Dataset B por grupo (validação cruzada)")
+    ax.set_ylabel("% de checagens"); ax.set_xlabel("")
+    ax.legend(title="Vetor", bbox_to_anchor=(1.02, 1), loc="upper left")
+    plt.xticks(rotation=15, ha="right")
+    plt.tight_layout(); plt.show()
+""")
+
+md("""### 6.2 Sobreposição de títulos entre Dataset A e Dataset B (preview do Dataset C)
+Antes de propor o Dataset C unificado (Seção 8), vale checar se A e B realmente descrevem boatos diferentes ou se há sobreposição direta de título — o que ajudaria a preencher datas ausentes do Dataset B via correspondência com o Dataset A.""")
+
+code(r"""
+if df_a_disponivel:
+    titulos_a = set(df_a["titulo"].str.strip().str.lower())
+    titulos_b = set(df["titulo"].str.strip().str.lower())
+    overlap_exato = titulos_a & titulos_b
+    print(f"Títulos idênticos (comparação exata, case-insensitive) entre A ({len(titulos_a)}) e B ({len(titulos_b)}): {len(overlap_exato)}")
+    if overlap_exato:
+        print(sorted(overlap_exato)[:10])
+    print("\nComo esperado, a sobreposição exata é baixa/nula — os dois sites redigem título próprio")
+    print("para o mesmo boato, então o cruzamento real do Dataset C precisará de similaridade textual")
+    print("(ex.: TF-IDF + cosine similarity, ou fuzzy matching), não de comparação exata de string.")
 """)
 
 md("""## 7. Salvar dataset enriquecido""")
@@ -238,8 +341,12 @@ md(r"""## 8. Limitações e próximos passos
 
 - **Sem data de publicação por item nesta coleta.** Impede o cálculo direto de `dias_para_eleicao` e de latência de desmentido (H3) e de aceleração temporal (H5) neste dataset — necessário voltar ao Aos Fatos e capturar a data (visível em cada página individual de checagem, não na listagem) antes da Fase 3, ou cruzar por título com o Dataset C.
 - **`eleicoes-2022` agora é população completa** (419 de 419 itens, 35/35 páginas) — a amostra de 7 páginas usada na primeira versão deste notebook foi substituída por uma coleta integral a pedido do usuário. Três páginas (13, 27, 31) exigiram nova tentativa por um glitch de cache do site que repetia o conteúdo da página anterior; cada uma foi confirmada como conteúdo único antes de aceita, e a checagem de duplicidade de títulos no dataset final (Seção 2) não encontrou nenhuma duplicata.
-- **`vetor_midia` e `alvo_ataque` continuam heurísticos** (baseados só no título) — apenas `rotulo_grupo` (IA vs. Tradicional) e `veredito`/`tema` são classificação editorial real e confiável nesta fonte.
-- Próximo passo natural: consolidar A + B no **Dataset C (unificado)**, cruzando por similaridade de título/tema, o que também ajuda a preencher datas ausentes do Dataset B via correspondência com itens do Dataset A que tratam do mesmo boato.
+- **`rotulo_grupo` foi auditado contra contaminação entre tags** (Seção 4.1) — nenhum título aparece sob mais de uma tag pesquisada, então a atribuição IA vs. Tradicional pela tag de busca é segura para este dataset.
+- **`tema` tem cobertura parcial** (Seção 4.2) — é uma anotação editorial opcional, não presente em todos os itens (mais comum dentro do grupo IA do que fora dele). Qualquer leitura de `tema` deve declarar o `n` efetivo, não `n=553`.
+- **`vetor_midia` e `alvo_ataque` continuam heurísticos** (baseados só no título) — apenas `rotulo_grupo` (IA vs. Tradicional), `veredito` e `tema` são classificação editorial real e confiável nesta fonte. `alvo_ataque` foi revisado nesta versão (Seção 3.3) para remover palavras genéricas demais (`"eleicao"`, `"eleicoes"`, `"voto"`, `"candidato"`, `"candidata"`) que inflavam artificialmente a contagem de `urna_processo` num corpus que é inteiramente sobre eleições.
+- **O achado de H4 (Seção 4.4) é contraintuitivo e merece cautela**: pela heurística atual, o grupo IA nunca é classificado como atacando o "processo/urna" (n=0) — só a pessoa do candidato ou indeterminado — o oposto do que H4 prevê à primeira vista. Isso pode refletir um viés real do fenômeno (deepfakes tendem a atacar pessoas, não sistemas) ou um artefato da heurística (poucas palavras de `urna_processo` aparecem em títulos sobre deepfakes de candidatos mesmo quando o conteúdo é sobre o processo eleitoral). Não deve ser tratado como confirmação nem refutação de H4 sem validação manual.
+- **Validação cruzada informal via `vetor_midia`** (Seção 6.1): a baseline Tradicional do Dataset B e o Dataset A inteiro convergem de forma consistente (~29-31% vídeo, ~59-61% indeterminado) apesar de serem coletas independentes — evidência indireta de que a heurística não é ruído aleatório. O grupo IA se destaca claramente das duas baselines (~48% audiovisual vs. ~32-33%).
+- Próximo passo natural: consolidar A + B no **Dataset C (unificado)**. A Seção 6.2 confirma que a sobreposição exata de título é baixa (4 de 322/553 itens) — o cruzamento real vai precisar de similaridade textual (TF-IDF/fuzzy matching), não comparação exata — o que também ajuda a preencher datas ausentes do Dataset B via correspondência com itens do Dataset A que tratam do mesmo boato.
 """)
 
 nb["cells"] = cells

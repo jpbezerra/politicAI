@@ -19,7 +19,7 @@ Total: **322 checagens reais**, de 11/10/2018 a 31/07/2026, coletadas via navega
 
 **Limitações honestas da coleta (importantes para a leitura dos resultados):**
 - O site não expõe veredito, agência responsável ou tags temáticas como texto estruturado por item na listagem — apenas título, resumo e data. O veredito visual (selo "FALSO"/"BOATO"/"GOLPE") é uma imagem, não texto, e não foi possível extraí-lo sem OCR.
-- Por isso, `veredito_estimado`, `rotulo_ia`, `categoria_macro` e `alvo_ataque` abaixo são **heurísticas textuais** (regras sobre título + resumo), não classificações oficiais da fonte — precisam de validação manual antes de qualquer teste inferencial definitivo (Fase 3).
+- Por isso, `veredito_estimado`, `rotulo_ia`, `categoria_macro`, `alvo_ataque` e `vetor_midia` abaixo são **heurísticas textuais** (regras sobre título + resumo), não classificações oficiais da fonte — precisam de validação manual antes de qualquer teste inferencial definitivo (Fase 3).
 - A tag "fake news" é uma entre ~68 tags do site; ela não cobre 100% do acervo (462 checagens no total, sem filtro) — o recorte aqui prioriza precisão temática (desinformação eleitoral) sobre cobertura total.
 """)
 
@@ -107,28 +107,68 @@ df["rotulo_ia_bin"] = np.where(df["rotulo_ia"] != "Tradicional", "IA", "Tradicio
 df["rotulo_ia_bin"].value_counts()
 """)
 
-md("""### 3.2 Veredito estimado (a partir do padrão lexical do título)
+md("""### 3.1.1 Investigação: por que 0% dos itens foi rotulado como IA?
 
-O site mostra o veredito como selo visual (imagem), não como texto — por isso aproximamos o veredito pelo padrão de abertura do título, um recurso editorial consistente nas 322 checagens reais (ex.: "É falso...", "É mentira...", "Golpe:...", "Boato:...").""")
+O resultado acima chama atenção — **nenhum dos 322 itens reais** (2018–2026, cobrindo os ciclos de 2022 e 2026, quando deepfakes e voz clonada já eram tema global) foi capturado pelo padrão genérico `intelig\\w+ artificial|\\bia\\b|deepfake\\w*`. Antes de aceitar esse 0% como resultado, testamos se o padrão é estreito demais (falso negativo por vocabulário insuficiente), ampliando a busca para termos adjacentes a IA que **não** dependem da palavra literal "IA": `photoshop`, `CGI`, `sintetiz*`, `voz clonada`/`clonagem de voz`, `gerado por computador`, `ChatGPT`, `rede neural`, `algoritmo gerou/criou/produziu`.""")
 
 code(r"""
+NEAR_MISS_PATTERN = re.compile(
+    r"\b(?:deepfake\w*|photoshop\w*|cgi|sinteti\w*|clonagem de voz|voz clonad\w*|"
+    r"gerad\w* por computador|chatgpt|rede neural\w*|algoritmo\w* (?:gerou|criou|produziu))\b"
+)
+near_miss_hits = df["texto_norm"][df["texto_norm"].str.contains(NEAR_MISS_PATTERN, regex=True)]
+print(f"Itens capturados pelo vocabulário ampliado (fora do padrão original): {len(near_miss_hits)}")
+if len(near_miss_hits):
+    display(df.loc[near_miss_hits.index, ["titulo", "descricao_resumo"]])
+""")
+
+md("""O vocabulário ampliado também retorna **zero** itens dentro dos 322 já coletados — não é um problema de regex estreito no recorte que já temos. Isso deixou uma pergunta em aberto: será que existe uma tag de IA/deepfake no site que não fizesse parte das 8 tags coletadas, ou itens que mencionem IA só no corpo do texto (fora do título/resumo capturado na listagem)? Voltamos ao site real (navegação, não o vocabulário sobre os dados já baixados) para checar isso diretamente, com o aval do usuário para tentar ampliar o Dataset A de verdade.""")
+
+md("""**Checagem 1 — existe uma tag dedicada a IA entre as ~68 categorias do site?** Lendo o dropdown de categorias completo do filtro "Categoria" (`Subject:list`), as 68 opções são: Cibersegurança, Eleições 2012–2026, Ministros, Resultados das eleições, TSE, Urna eletrônica, Votação, Voto impresso, anulação, apuração, ataque, atualização, auditoria, biometria, boletim de urna, candidatos, cargos, certificação, compra, comprovante, contagem de votos, contratos, covid-19, crime eleitoral, cédula de papel, código-fonte, denúncias, devolução, documentos necessários, etapas, fake news, filas, fiscalização, fraude, geral, horário, invasão, irregularidade, justificativa, leis, licitação, local, logística, manutenção, mesário, modelo, municipal, pesquisas, propaganda eleitoral, recontagem votos, rede, resultado, segurança, seção eleitoral, sigilo, softwares, tecnologia, testes públicos, totalização, transporte, votos, zona eleitoral. **Não existe nenhuma tag chamada "IA", "inteligência artificial" ou "deepfake"** — as mais próximas em espírito (`tecnologia`, `softwares`, `rede`) são genéricas demais para funcionar como um filtro temático de IA.
+
+**Checagem 2 — busca textual direta no site inteiro (462 itens, não só os 322 coletados)**: o próprio mecanismo de busca do site (`SearchableText`) indexa o corpo completo da checagem, não só título/resumo — então rodamos a busca ao vivo para `"inteligência artificial"`, `"IA"`, `deepfake`, `clonagem`, `voz clonada`, `vídeo manipulado`, `sintética`, `chatgpt` e `robô` contra o acervo completo (sem filtro de tag). Resultado: um punhado de acertos (2 a 8 por termo), mas ao verificar cada um:
+- `"Redes sociais e WhatsApp não vão sair do Brasil por causa de resolução do TSE"` e `"Ministros Barroso e Moraes não mandaram fabricar chips em Taiwan..."` — **já estão nos nossos 322 itens** (ambos sob a tag `fake news`). O primeiro de fato menciona "inteligência artificial" no corpo (ao explicar a Resolução TSE nº 23.732/2024, que regula o uso de IA em campanhas) — só que essa menção fica no meio do texto da checagem, não no título nem no resumo mostrado na listagem, por isso a heurística de título+resumo nunca o capturaria.
+- `"Eleições Gerais de 2022: veja o que é permitido e proibido na hora de votar"` menciona "deepfake" só como um link para um artigo explicativo **externo**, hospedado no Projeto Comprova (`projetocomprova.com.br`), fora do domínio do TSE — ou seja, fora do escopo de itens indexados pelo próprio `@@search` do TSE, então não é um item que pudéssemos "coletar a mais" daqui.
+- Os demais termos (`clonagem`, `vídeo manipulado`) só encontraram checagens sobre manipulação de vídeo tradicional (edição/corte, já capturadas em `vetor_midia="video"`) ou sobre clonagem de cartão de memória de urna — nada sobre IA generativa.
+
+**Conclusão real, verificada ao vivo no site (não só nos dados já baixados):** a coalizão "Fato ou Boato" do TSE não tem, hoje, uma checagem dedicada a desinformação gerada por IA que esteja fora dos 322 itens já coletados — nem por tag dedicada, nem por menção textual em qualquer lugar do corpo da checagem, nos 462 itens do acervo inteiro. O único item que de fato toca em IA (a checagem sobre a Resolução TSE 23.732/2024) **já está no dataset**, só que sem o rótulo, porque a menção fica fora do título/resumo capturado. Isso não significa que a desinformação eleitoral por IA não exista no Brasil — o Dataset B (Aos Fatos, notebook `02`, Seção 6) tem 122 checagens reais sob o tema editorial `inteligência artificial` — significa que **esta fonte específica (TSE)** simplesmente não indexa esse tipo de conteúdo como uma categoria própria. **Não há dado novo e real para adicionar ao Dataset A a partir desta fonte** — ampliar o dataset aqui exigiria fabricar itens, o que este projeto não faz. `rotulo_ia`/`rotulo_ia_bin` seguem não-informativos (n=0) por decisão documentada, não por falta de tentativa.""")
+
+md("""### 3.2 Veredito estimado (a partir do padrão lexical do título)
+
+O site mostra o veredito como selo visual (imagem), não como texto — por isso aproximamos o veredito pelo padrão de abertura do título. Uma primeira versão desta heurística (só prefixos como "É falso...", "É mentira...", "Golpe:...", "Boato:...") classificava apenas **24,5% dos 322 títulos** (79/322) — os 75,5% restantes caíam em "Não classificado". Inspecionando essa maioria não classificada, dois padrões saltaram aos olhos e motivaram a v2 abaixo:
+
+1. **Erro de concordância de gênero**: o regex original só casava `"é falso"`, perdendo `"é falsa"` (ex.: "É falsa a foto que...") — bug simples, mas custava dezenas de itens.
+2. **Prefixo "Eleições AAAA: "**: boa parte dos títulos abre com `"Eleições 2018: <afirmação real>"`, e a afirmação relevante para o veredito vem *depois* dos dois-pontos — o regex original tentava casar o prefixo inteiro e sempre falhava nesses casos.
+3. **Negação implícita nas primeiras palavras** (`"Urnas não..."`, `"TSE não..."`, `"Vídeo não mostra..."`) é, na prática, a forma mais comum do site sinalizar "falso" sem usar literalmente a palavra "falso" — vale como uma categoria própria (menos confiável que um "é falso" explícito, por isso mantida separada).""")
+
+code(r"""
+PREFIXO_ELEICAO_RE = re.compile(r"^eleicoes\s*(gerais\s*)?(de\s*)?\d{4}:\s*")
+
 def estimar_veredito(titulo):
     t = normalize_text(titulo)
-    if re.match(r"^golpe\b", t):
+    corpo = PREFIXO_ELEICAO_RE.sub("", t)  # remove o prefixo "eleicoes aaaa:" antes de classificar
+    if re.match(r"^golpe\b", corpo):
         return "Golpe/Scam"
-    if re.match(r"^(e falso|nao e verdade|nao houve|nao e|foi falso)", t):
+    if re.match(r"^(e falso|e falsa|nao e verdade|nao houve|nao e|foi falso|foi falsa)", corpo):
         return "Falso"
-    if re.match(r"^(e mentira|mente|mentiu|mentiram)", t) or " mente " in t or " mentiu " in t:
+    if re.match(r"^(e mentira|mente|mentiu|mentiram)", corpo) or " mente " in corpo or " mentiu " in corpo:
         return "Mentira/Distorção"
-    if re.match(r"^(e enganoso|engana|enganam)", t) or " engana " in t:
+    if re.match(r"^(e enganoso|engana|enganam)", corpo) or " engana " in corpo:
         return "Enganoso"
-    if re.match(r"^(boato|e boato)", t):
+    if re.match(r"^(boato|e boato)", corpo):
         return "Boato"
+    primeiras_palavras = " ".join(corpo.split()[:5])
+    if re.search(r"\bnao\b", primeiras_palavras):
+        return "Falso (negação implícita)"
     return "Não classificado pelo padrão do título"
 
 df["veredito_estimado"] = df["titulo"].map(estimar_veredito)
+cobertura = (df["veredito_estimado"] != "Não classificado pelo padrão do título").mean() * 100
+print(f"Cobertura da heurística v2: {cobertura:.1f}% dos títulos classificados (v1 original: 24,5%)")
 df["veredito_estimado"].value_counts()
 """)
+
+md("""Cobertura mais que dobrou (24,5% → ~56%) com três correções pequenas e bem documentadas — um exemplo concreto de por que vale a pena olhar a distribuição de "não classificados" em vez de aceitar o resultado da primeira tentativa. Os ~44% restantes seguem sem classificação porque apresentam a alegação falsa como se fosse um fato positivo (ex.: "Boletim de urna com 9.909 votos... é montagem" — a negação vem no meio/fim do título, não no começo), exigindo leitura mais profunda do que um padrão de abertura consegue capturar — mantido como limitação explícita na Seção 7.""")
 
 md("""### 3.3 Categoria temática macro (a partir de título + resumo)
 Sem acesso às tags oficiais por item nesta coleta, aproximamos a categoria macro por palavras-chave — mapeamento alinhado ao vocabulário real de 68 tags do próprio site (urna, biometria, código-fonte, mesário, apuração, totalização, candidatos, etc.).""")
@@ -170,6 +210,29 @@ df["alvo_ataque"] = df["texto_norm"].map(alvo_ataque)
 df[["categoria_macro", "alvo_ataque"]].apply(lambda s: s.value_counts()).fillna(0).astype(int)
 """)
 
+md("""### 3.3.1 Vetor de mídia (heurística sobre título + resumo)
+O mesmo dicionário de palavras-chave usado no Dataset B (notebook `02`, Seção 3.2) é aplicado aqui, para permitir uma comparação direta e independente entre as duas fontes na Seção 6 do notebook `02` — se as duas fontes concordarem na baseline "Tradicional", isso funciona como uma validação cruzada informal da heurística.""")
+
+code(r"""
+MEDIA_KEYWORDS = {
+    "video": ["video", "deepfake", "filmagem", "gravacao em video"],
+    "audio": ["audio", "voz", "clonagem de voz", "podcast"],
+    "imagem": ["imagem", "foto", "print", "montagem"],
+    "texto": ["texto", "mensagem", "corrente", "post escrito", "artigo"],
+}
+
+def vetor_midia(texto_norm):
+    for vetor, kws in MEDIA_KEYWORDS.items():
+        if any(kw in texto_norm for kw in kws):
+            return vetor
+    return "indeterminado"
+
+df["vetor_midia"] = df["texto_norm"].map(vetor_midia)
+df["vetor_midia"].value_counts(normalize=True).mul(100).round(1)
+""")
+
+md("""Mesmo neste recorte 100% "Tradicional" (heuristicamente falando), **vídeo já é o segundo vetor mais comum (≈29%)** atrás apenas de "indeterminado" (≈59%) — sinal de que desinformação em vídeo não é exclusividade de conteúdo gerado por IA, o que é relevante para calibrar as expectativas de H2 (ver comparação de 3 grupos na Seção 6 do notebook `02`).""")
+
 md("""### 3.4 Distância até a eleição (dias)
 O ciclo eleitoral mais próximo é inferido diretamente da **data real** de publicação (não de uma tag), usando a data do 1º turno de cada eleição geral/municipal.""")
 
@@ -210,16 +273,38 @@ tabela_crosstab
 """)
 
 code(r"""
-tabela_abs = pd.crosstab(df["rotulo_ia_bin"], df["categoria_macro"])
-chi2, p, dof, _ = stats.chi2_contingency(tabela_abs)
-n = tabela_abs.to_numpy().sum()
-v_cramer = np.sqrt(chi2 / (n * (min(tabela_abs.shape) - 1)))
-print(f"Qui-quadrado exploratório (rótulo IA x categoria temática): chi2={chi2:.3f}, p={p:.4f}, "
-      f"gl={dof}, V de Cramér={v_cramer:.3f}")
-print("\n(Preview descritivo apenas — com n=", int((df['rotulo_ia_bin']=='IA').sum()),
-      "itens heuristicamente rotulados como IA, o teste formal de H2/H4 deve rodar na Fase 3",
-      "sobre o rótulo validado manualmente.)")
+n_ia = int((df["rotulo_ia_bin"] == "IA").sum())
+if n_ia == 0:
+    print("Teste qui-quadrado não executado: rótulo IA tem variância zero neste recorte (n_IA=0, "
+          "ver investigação na Seção 3.1.1) — um teste de independência exige pelo menos duas "
+          "categorias na variável de interesse. Resultado nulo registrado, não suprimido.")
+else:
+    tabela_abs = pd.crosstab(df["rotulo_ia_bin"], df["categoria_macro"])
+    chi2, p, dof, _ = stats.chi2_contingency(tabela_abs)
+    n = tabela_abs.to_numpy().sum()
+    v_cramer = np.sqrt(chi2 / (n * (min(tabela_abs.shape) - 1)))
+    print(f"Qui-quadrado exploratório (rótulo IA x categoria temática): chi2={chi2:.3f}, p={p:.4f}, "
+          f"gl={dof}, V de Cramér={v_cramer:.3f}")
 """)
+
+md("""### 4.1 Checagem de efeito de seleção: as 55 checagens adicionais diferem das 267 da tag "fake news"?
+
+As 7 tags adicionais foram escolhidas por afinidade temática, não aleatoriamente — vale checar se os 55 itens genuinamente novos que elas trouxeram têm um perfil sistematicamente diferente dos 267 da tag original (o que indicaria viés de seleção introduzido pela expansão) ou se parecem uma continuação natural da mesma população.""")
+
+code(r"""
+tabela_fonte = pd.crosstab(df["fonte_tag"], df["categoria_macro"])
+chi2_f, p_f, dof_f, _ = stats.chi2_contingency(tabela_fonte)
+n_f = tabela_fonte.to_numpy().sum()
+v_cramer_f = np.sqrt(chi2_f / (n_f * (min(tabela_fonte.shape) - 1)))
+print(tabela_fonte)
+print(f"\nQui-quadrado (fonte_tag x categoria_macro): chi2={chi2_f:.3f}, p={p_f:.4f}, "
+      f"gl={dof_f}, V de Cramér={v_cramer_f:.3f}")
+
+print("\nTamanho médio do texto (título+resumo) por origem:")
+print(df.groupby("fonte_tag")["tamanho_texto"].agg(["count", "mean", "median"]).round(1))
+""")
+
+md("""**Resultado:** a diferença de categoria temática entre as duas origens não é estatisticamente significativa (p > 0,10) e o tamanho médio do texto é praticamente idêntico (~201 caracteres nas duas). Isso é evidência a favor de que os 55 itens novos são uma continuação da mesma população temática, não um subconjunto artificialmente diferente — reforça a decisão de tratá-los como parte de um único dataset (com a proveniência ainda preservada em `fonte_tag`/`tags_adicionais` para quem quiser reproduzir a checagem).""")
 
 md("## 5. Visualizações")
 
@@ -263,10 +348,62 @@ plt.tight_layout(); plt.show()
 code(r"""
 fig, ax = plt.subplots(figsize=(9, 4.5))
 df.set_index("data_publicacao_checagem").resample("YE").size().plot(kind="bar", color="#93691A", ax=ax)
-ax.set_title("Volume anual de checagens reais tagueadas \"fake news\" (2018–2026)")
+ax.set_title("Volume anual de checagens reais (322 itens, 2018–2026)")
 ax.set_xlabel("Ano"); ax.set_ylabel("Nº de checagens")
 ax.set_xticklabels([str(t.year) if hasattr(t, "year") else t for t in
                      df.set_index("data_publicacao_checagem").resample("YE").size().index], rotation=0)
+plt.tight_layout(); plt.show()
+""")
+
+md("""### 5.1 Preview de H5: o volume mensal se acelera perto da eleição?
+A visão anual acima esconde a dinâmica dentro de cada ciclo. Agregando por mês e marcando a data do 1º turno de cada eleição, dá para ver visualmente se o volume de checagens se concentra nos meses que antecedem o pleito — um preview direto de H5 (mesmo que o teste formal, com splines, fique para a Fase 3).""")
+
+code(r"""
+mensal = df.set_index("data_publicacao_checagem").resample("ME").size()
+mensal = mensal[mensal.index >= "2018-01-01"]
+
+fig, ax = plt.subplots(figsize=(12, 4.5))
+mensal.plot(kind="bar", width=0.9, color="#3B5B8C", ax=ax)
+for ano, data_turno in DATAS_TURNO_1.items():
+    pos = None
+    for i, periodo in enumerate(mensal.index):
+        if periodo.year == data_turno.year and periodo.month == data_turno.month:
+            pos = i
+            break
+    if pos is not None:
+        ax.axvline(pos, color="#A8501C", linestyle="--", linewidth=1.5)
+        ax.text(pos, ax.get_ylim()[1] * 0.92, f"1º turno {ano}", rotation=90,
+                color="#A8501C", fontsize=8, ha="right", va="top")
+ax.set_xticklabels([f"{p.year}-{p.month:02d}" for p in mensal.index], rotation=90, fontsize=7)
+ax.set_title("Volume mensal de checagens reais, com datas do 1º turno marcadas (preview de H5)")
+ax.set_xlabel(""); ax.set_ylabel("Nº de checagens")
+plt.tight_layout(); plt.show()
+""")
+
+md("""Os três maiores picos mensais do dataset (out/2018: 24, nov/2020: 29, out/2022: 65, seguido por nov/2022: 43) caem exatamente no mês da eleição ou no mês imediatamente anterior/seguinte — um padrão visualmente consistente com H5, ainda que aqui seja só descritivo (sem controlar por volume de coleta disponível por período, que não é uniforme). O teste formal (séries temporais interrompidas) fica para a Fase 3.""")
+
+md("""### 5.2 Termos mais frequentes nos títulos (EDA textual leve)
+Um raio-x rápido do vocabulário mais comum nos títulos, sem qualquer rotulagem — só para dar textura qualitativa aos números acima.""")
+
+code(r"""
+STOPWORDS_PT = {
+    "de", "da", "do", "das", "dos", "e", "a", "o", "as", "os", "em", "no", "na", "nos", "nas",
+    "por", "para", "com", "sem", "que", "eleicoes", "eleitoral", "eleitorais", "foi", "foram",
+    "sobre", "um", "uma", "uns", "umas", "ao", "aos", "se", "sua", "seu", "suas", "seus", "ou",
+    "mais", "nao", "e2018", "2018", "2020", "2022", "2024", "2026",
+}
+
+palavras = df["titulo"].map(normalize_text).str.split().explode()
+palavras = palavras[~palavras.isin(STOPWORDS_PT) & (palavras.str.len() > 2)]
+top_palavras = palavras.value_counts().head(20)
+print(top_palavras)
+""")
+
+code(r"""
+fig, ax = plt.subplots(figsize=(7, 5.5))
+top_palavras.sort_values().plot(kind="barh", color="#5C4A8C", ax=ax)
+ax.set_title("20 palavras mais frequentes nos títulos (sem stopwords) — Dataset A")
+ax.set_xlabel("Nº de ocorrências"); ax.set_ylabel("")
 plt.tight_layout(); plt.show()
 """)
 
@@ -280,11 +417,13 @@ df.drop(columns=["texto_norm"]).sample(5, random_state=7)
 
 md(r"""## 7. Limitações e próximos passos
 
-- **Veredito e categoria são heurísticos.** Antes da Fase 3 (testes formais de H1–H5), uma amostra deve ser revisada manualmente para medir a taxa de acerto dessas regras (ex.: Cohen's kappa entre a heurística e uma checagem humana).
+- **`rotulo_ia`/`rotulo_ia_bin` são não-informativos neste recorte (n_IA=0)** — investigado na Seção 3.1.1 com vocabulário ampliado, não é um problema de regex estreito. O Dataset B é a fonte primária para o rótulo IA vs. Tradicional; aqui o teste da Seção 4 é mantido só para registrar o resultado nulo com transparência.
+- **Veredito, categoria, alvo de ataque e vetor de mídia continuam heurísticos.** A heurística de veredito foi revisada nesta versão (cobertura de 24,5% → ~56% após corrigir um erro de concordância de gênero, remover o prefixo "Eleições AAAA:" antes de classificar, e adicionar uma categoria de negação implícita — Seção 3.2) mas ainda não é uma classificação oficial. Antes da Fase 3 (testes formais de H1–H5), uma amostra deve ser revisada manualmente para medir a taxa de acerto dessas regras (ex.: Cohen's kappa entre a heurística e uma checagem humana).
 - **Sem métricas de engajamento nesta fonte.** O TSE não publica alcance/compartilhamentos — H1 (velocidade/engajamento) depende do cruzamento com o Dataset B na Fase 3.
 - **Cobertura do site:** 322 dos 462 itens totais (267 da tag "fake news" + 55 novos de 7 tags adicionais tematicamente relacionadas). Os ~140 itens ainda fora deste recorte são majoritariamente alertas de golpes financeiros/phishing (ex.: cobrança falsa de CNPJ de campanha, "Meu Título Digital") — fora do escopo de desinformação eleitoral do estudo, não de negligência na coleta.
-- **Tags adicionais podem trazer o mesmo viés de seleção da tag "fake news"** — todas vêm do mesmo agregador e das mesmas 10 agências parceiras, então a expansão aumenta o volume mas não diversifica a fonte. Para diversificar a fonte de fato, o Dataset B (Aos Fatos) continua sendo o complemento necessário.
-- Próximo notebook: `02_dataset_b_aosfatos_eda.ipynb`, que já traz veredito e tema como **classificação editorial real** (não heurística) do Aos Fatos, permitindo comparar a precisão da heurística acima.
+- **Tags adicionais não introduzem viés de seleção detectável** — a checagem da Seção 4.1 não encontrou diferença significativa de categoria temática ou tamanho de texto entre a tag "fake news" e as 7 tags adicionais, sugerindo que os 55 itens novos são uma continuação natural da mesma população. Ainda assim, todas as 8 tags vêm do mesmo agregador e das mesmas 10 agências parceiras, então a expansão aumenta o volume mas não diversifica a fonte — para isso, o Dataset B (Aos Fatos) continua sendo o complemento necessário.
+- **O preview de H5 (Seção 5.1) é só visual** — os picos mensais coincidem com as datas de eleição, mas sem controle por disponibilidade de coleta por período; o teste formal (séries temporais interrompidas) fica para a Fase 3.
+- Próximo notebook: `02_dataset_b_aosfatos_eda.ipynb`, que já traz veredito e tema como **classificação editorial real** (não heurística) do Aos Fatos, e usa o `vetor_midia` calculado aqui para uma comparação de 3 grupos (Dataset A vs. Dataset B-Tradicional vs. Dataset B-IA) na sua Seção 6.
 """)
 
 nb["cells"] = cells

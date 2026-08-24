@@ -334,11 +334,9 @@ mensal_c = mensal_c.reset_index(drop=True)
 mensal_c.plot(kind="bar", stacked=True, width=0.9,
               color={"IA": "#A8501C", "Tradicional": "#3B5B8C"}, ax=ax)
 
-from datetime import date
-DATAS_TURNO_1 = {
-    2018: date(2018, 10, 7), 2020: date(2020, 11, 15), 2022: date(2022, 10, 2),
-    2024: date(2024, 10, 6), 2026: date(2026, 10, 4),
-}
+import sys
+sys.path.insert(0, "../scripts")
+from election_calendar import DATAS_TURNO_1  # centralizado -- ver docs/PRD.md, backlog de melhorias
 for ano, data_turno in DATAS_TURNO_1.items():
     pos = None
     for i, periodo in enumerate(periodos_c):

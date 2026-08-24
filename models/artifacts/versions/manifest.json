@@ -1,0 +1,26 @@
+[
+  {
+    "versao_id": "v0-topic-2026.08_20260824T195305Z",
+    "versao_modelo": "v0-topic-2026.08",
+    "gerado_em": "2026-08-24T19:53:05.623865+00:00",
+    "acuracia_teste": 0.990990990990991,
+    "f1_ia_teste": 0.9795918367346939,
+    "path": "versions/v0-topic-2026.08_20260824T195305Z"
+  },
+  {
+    "versao_id": "v0-topic-2026.08_20260824T200336Z",
+    "versao_modelo": "v0-topic-2026.08",
+    "gerado_em": "2026-08-24T20:03:36.879852+00:00",
+    "acuracia_teste": 0.990990990990991,
+    "f1_ia_teste": 0.9795918367346939,
+    "path": "versions/v0-topic-2026.08_20260824T200336Z"
+  },
+  {
+    "versao_id": "v0-topic-2026.08_20260824T221549Z",
+    "versao_modelo": "v0-topic-2026.08",
+    "gerado_em": "2026-08-24T22:15:49.258103+00:00",
+    "acuracia_teste": 0.990990990990991,
+    "f1_ia_teste": 0.9795918367346939,
+    "path": "versions/v0-topic-2026.08_20260824T221549Z"
+  }
+]

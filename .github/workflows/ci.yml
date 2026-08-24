@@ -1,0 +1,66 @@
+name: CI
+
+# CI básico do projeto politicAI (ver docs/PRD.md, Seção 11.2, item 2).
+# Dois jobs independentes -- /web e /models são projetos separados (Seção 9
+# do PRD), então cada um só roda se algo dentro dele (ou este workflow) mudar.
+# Isto valida lint + build + testes a cada push/PR, em vez de depender de
+# verificação manual antes de cada entrega.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  web:
+    name: web (lint, build, test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint .
+
+      - name: Testes unitários (Vitest)
+        run: npm run test
+
+      - name: Build de produção
+        # ../data/processed/ precisa existir para o build gerar as páginas
+        # que leem o Dataset C (ver web/README.md, "De onde vêm os dados") --
+        # o repositório já versiona os CSVs processados, então isso funciona
+        # out-of-the-box num checkout normal.
+        run: npm run build
+
+  models:
+    name: models (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: models
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: models/pyproject.toml
+
+      - name: Instalar o pacote e dependências de dev
+        run: pip install -e ".[dev]"
+
+      - name: Testes (pytest)
+        run: pytest -q

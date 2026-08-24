@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/*
+ * Modo claro/escuro: por padrão segue a preferência do sistema
+ * (`prefers-color-scheme`), mas pode ser sobrescrito manualmente pelo
+ * `ThemeToggle` (ver src/components/theme-toggle.tsx), que adiciona a
+ * classe `dark`/`light` em `<html>` e persiste a escolha em localStorage.
+ * Por isso o `dark:` do Tailwind aqui é baseado em classe (não só em
+ * media query) -- ver docs/PRD.md, backlog de melhorias, item "dark mode".
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Visível só ao ganhar foco por teclado -- link "pular para o conteúdo". */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 50;
+  padding: 0.5rem 1rem;
+  background: var(--foreground);
+  color: var(--background);
+  border-radius: 0 0 0.5rem 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}

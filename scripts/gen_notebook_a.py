@@ -237,18 +237,12 @@ md("""### 3.4 Distância até a eleição (dias)
 O ciclo eleitoral mais próximo é inferido diretamente da **data real** de publicação (não de uma tag), usando a data do 1º turno de cada eleição geral/municipal.""")
 
 code(r"""
-DATAS_TURNO_1 = {
-    2018: date(2018, 10, 7), 2020: date(2020, 11, 15), 2022: date(2022, 10, 2),
-    2024: date(2024, 10, 6), 2026: date(2026, 10, 4),
-}
-
-def ciclo_e_dias(data_pub):
-    ano = data_pub.year
-    anos_disponiveis = sorted(DATAS_TURNO_1.keys())
-    ciclo = min(anos_disponiveis, key=lambda a: abs(a - ano))
-    turno = DATAS_TURNO_1[ciclo]
-    return pd.Series({"ciclo_eleitoral_estimado": ciclo,
-                       "dias_para_eleicao": (data_pub.date() - turno).days})
+# DATAS_TURNO_1/ciclo_e_dias centralizados em scripts/election_calendar.py
+# (estava duplicado, idêntico, nos 3 geradores de notebook -- ver docs/PRD.md,
+# backlog de melhorias).
+import sys
+sys.path.insert(0, "../scripts")
+from election_calendar import DATAS_TURNO_1, ciclo_e_dias
 
 df = df.join(df["data_publicacao_checagem"].apply(ciclo_e_dias))
 df[["data_publicacao_checagem", "ciclo_eleitoral_estimado", "dias_para_eleicao"]].sample(5, random_state=1)

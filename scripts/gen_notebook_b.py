@@ -139,18 +139,12 @@ md("""### 3.4 Data real de publicação — finalmente disponível para H3/H5
 Com `data_publicacao_iso` real por item (não mais uma limitação deste dataset), replicamos a mesma lógica de `ciclo_eleitoral_estimado` e `dias_para_eleicao` usada no notebook `01` (Dataset A), permitindo comparar diretamente os dois datasets no mesmo eixo temporal.""")
 
 code(r"""
-DATAS_TURNO_1 = {
-    2018: date(2018, 10, 7), 2020: date(2020, 11, 15), 2022: date(2022, 10, 2),
-    2024: date(2024, 10, 6), 2026: date(2026, 10, 4),
-}
-
-def ciclo_e_dias(data_pub):
-    ano = data_pub.year
-    anos_disponiveis = sorted(DATAS_TURNO_1.keys())
-    ciclo = min(anos_disponiveis, key=lambda a: abs(a - ano))
-    turno = DATAS_TURNO_1[ciclo]
-    return pd.Series({"ciclo_eleitoral_estimado": ciclo,
-                       "dias_para_eleicao": (data_pub.date() - turno).days})
+# DATAS_TURNO_1/ciclo_e_dias centralizados em scripts/election_calendar.py
+# (estava duplicado, idêntico, nos 3 geradores de notebook -- ver docs/PRD.md,
+# backlog de melhorias).
+import sys
+sys.path.insert(0, "../scripts")
+from election_calendar import DATAS_TURNO_1, ciclo_e_dias
 
 df = df.join(df["data_publicacao_iso"].apply(ciclo_e_dias))
 df[["data_publicacao_iso", "ciclo_eleitoral_estimado", "dias_para_eleicao", "rotulo_grupo"]].sample(5, random_state=1)
@@ -201,7 +195,117 @@ print(f"  vetor_midia:  {(df['vetor_midia']=='indeterminado').mean()*100:.1f}% -
 print(f"  alvo_ataque:  {(df['alvo_ataque']=='indeterminado').mean()*100:.1f}% -> {(df['alvo_ataque_texto']=='indeterminado').mean()*100:.1f}%")
 """)
 
-md("""**Leitura:** com a contaminação removida, `alvo_ataque_texto` agora tem uma taxa de "indeterminado" (43.8%) da mesma ordem de grandeza da versão de título (37.4%) — não mais zero — o que é um sinal de que a heurística corrigida está de fato discriminando alvo, não saturando por ubiquidade lexical. A concordância com a versão de título (Seção 3.3) é moderada, o que é esperado: são dois sinais textuais diferentes (título curto vs. corpo inteiro), não a mesma medição repetida. **O achado mais importante desta correção aparece na Seção 4.4b — o resultado de H4 muda de direção**, não só de magnitude, frente à versão contaminada da análise anterior.""")
+md("""**Leitura:** com a contaminação removida, `alvo_ataque_texto` agora tem uma taxa de "indeterminado" (43.8%) da mesma ordem de grandeza da versão de título (37.4%) — não mais zero — o que é um sinal de que a heurística corrigida está de fato discriminando alvo, não saturando por ubiquidade lexical. A concordância com a versão de título (Seção 3.3) é moderada, o que é esperado: são dois sinais textuais diferentes (título curto vs. corpo inteiro), não a mesma medição repetida. **Isto ainda não é a versão final — a Seção 3.5b abaixo encontra uma terceira contaminação, mais sutil, dentro do próprio `corpo_artigo`.**""")
+
+md("""### 3.5b Terceira correção: boilerplate de assinatura/metodologia dentro do próprio `corpo_artigo` (descoberta na Fase 3, aplicada retroativamente aqui)
+
+A Seção 3.5 isolou `corpo_artigo` do dump da página inteira (removendo nav/rodapé). Mas ao construir, na Fase 3, o classificador de ML de temática de IA (`models/`), descobrimos que mesmo dentro de `corpo_artigo` restam dois trechos de template editorial do próprio Aos Fatos, colados sem separador ao texto real do artigo:
+
+1. Um CTA de assinatura por WhatsApp ("Siga o canal do Aos Fatos no WhatsApp e receba nossas checagens e reportagens" / "Inscreva-se no nosso canal e receba as nossas checagens e reportagens").
+2. Uma abertura de quadro de metodologia ("O caminho da apuração [Aos Fatos]...").
+
+O segundo é crítico especificamente para este notebook: a palavra "apuração" (normalizada para `"apuracao"`) é **literalmente uma das palavras-chave de `urna_processo`** em `ATTACK_KEYWORDS_CORPO` (Seções 3.3/3.5). Todo item que contém essa frase-modelo é automaticamente empurrado para `urna_processo` por `alvo_ataque_corpo`, mesmo que o boato não tenha nada a ver com o processo eleitoral.
+
+Esse trecho aparece em **86.9% dos itens do grupo IA**, contra **apenas 5.3% do grupo Tradicional** — o mesmo padrão de assinatura desigual já visto na contaminação lexical do classificador de ML (Fase 3): o Aos Fatos aparentemente adicionou esse quadro ao site depois de um certo período, e os itens IA são majoritariamente mais recentes.
+
+Aplicamos a mesma limpeza usada no classificador de ML (`models/src/models_pkg/data/boilerplate.py`, reproduzida aqui — sem importar entre os dois projetos, que têm venvs separados — para não criar uma dependência cruzada; mantenha os dois sincronizados se o padrão do site mudar). Aquele módulo documenta 6 padrões de template no total (o CTA de WhatsApp e "o caminho da apuração..." descritos acima, mais outros quatro encontrados numa revisão posterior do corpus — caixa de parceria com a Meta, nota de checagem colaborativa de fim de semana, nota de checagem cruzada com outra agência, e um rodapé raro de direitos autorais); os 6 são removidos aqui, embora só o segundo ("apuração") tenha palavra-chave colidindo com `ATTACK_KEYWORDS_CORPO` — os outros quatro não mudam nenhuma classificação, mas ficam sincronizados por precaução. Recalculamos `vetor_midia_texto`/`alvo_ataque_texto` por cima do resultado da Seção 3.5.""")
+
+code(r"""
+_WHATSAPP_CTA_RE = re.compile(
+    r"(siga\s+o\s+canal\s+do\s*aos\s+fatos\s+no\s+whatsapp"
+    r"|inscreva-se\s+no\s+nosso\s+canal)"
+    r"\s*e\s*receba\s*(as\s*)?nossas\s*checagens\s*e\s*reportagens",
+    re.IGNORECASE,
+)
+_CAMINHO_APURACAO_RE = re.compile(
+    r"o\s+caminho\s+da\s+apura[cç][aã]o\s*(aos\s+fatos)?",
+    re.IGNORECASE,
+)
+_META_PARCERIA_RE = re.compile(
+    r"aos\s+fatos\s+integra\s+o\s+"
+    r"(programa\s+de\s+verifica[cç][aã]o\s+de\s+fatos\s+independente\s+da\s+meta"
+    r"|third-party\s+fact-checking\s+partners,?\s+o\s+programa\s+de\s+verifica[cç][aã]o\s+de\s+fatos\s+da\s+meta)"
+    r"\.?\s*(veja\s+aqui\s+como\s+funciona\s+a\s+parceria\s*\.?)?",
+    re.IGNORECASE,
+)
+_VEJA_PARCERIA_RE = re.compile(
+    r"veja\s+aqui\s+como\s+funciona\s+a\s+parceria\s*\.?",
+    re.IGNORECASE,
+)
+_FIM_DE_SEMANA_INICIATIVAS_RE = re.compile(
+    r"neste\s+fim\s+de\s+semana,\s+o\s+aos\s+fatos\s+se\s+uniu\s+[aà]s\s+iniciativas\s+de\s+checagem\s+"
+    r"afp\s+checamos\s*,\s*boatos\.org\s*,\s*comprova\s*,\s*e-farsas\s*,\s*fato\s+ou\s+fake\s+e\s+lupa\s+"
+    r"para\s+verificar\s+em\s+conjunto\s+a\s+desinforma[cç][aã]o\s+sobre\s+as\s+elei[cç][oõ]es\s*\.?",
+    re.IGNORECASE,
+)
+_NOME_AGENCIA_PARCEIRA_RE_FRAGMENTO = (
+    r"(?:agencia\s+lup\s*a|ag[eê]ncia\s+lup\s*a|lup\s*a|reuters|boatos(?:\.org)?|"
+    r"estad[aã]o\s+verifica|uol\s+verifica|uol\s+confere|uol|"
+    r"fato\s+ou\s+fake(?:\s*,\s*do\s+grupo\s+globo)?|g1|nsc\s+total|afp|"
+    r"projeto\s+comprova|comprova)"
+)
+_CONECTOR_AGENCIA_RE_FRAGMENTO = r"(?:\s+e\s+pel[ao]\s+|\s+e\s+)"
+_CHECADO_POR_TERCEIROS_RE = re.compile(
+    r"esta\s+(checagem|pe[cç]a\s+de\s+desinforma[cç][aã]o)\s+tamb[eé]m\s+foi\s+(checada|feita)\s+"
+    r"pel[ao]\s*\n?\s*" + _NOME_AGENCIA_PARCEIRA_RE_FRAGMENTO
+    + r"(?:" + _CONECTOR_AGENCIA_RE_FRAGMENTO + _NOME_AGENCIA_PARCEIRA_RE_FRAGMENTO + r")*\s*\.",
+    re.IGNORECASE,
+)
+_DIREITOS_RESERVADOS_RE = re.compile(
+    r"todos\s+os\s+direitos\s+reservados\.?",
+    re.IGNORECASE,
+)
+
+def strip_known_boilerplate(texto):
+    # Reproduz models/src/models_pkg/data/boilerplate.py (todos os 6 padrões
+    # documentados lá, não só os 2 originais) -- ver a docstring daquele
+    # módulo para o achado completo de cada um. Mantido sincronizado
+    # manualmente porque os dois projetos têm venvs separados; nenhum dos
+    # 4 padrões adicionados na 2ª rodada colide com ATTACK_KEYWORDS_CORPO
+    # ou MEDIA_KEYWORDS deste notebook (conferido item a item), então
+    # sincronizar não muda nenhuma classificação -- é higiene/consistência,
+    # não uma nova correção de achado.
+    if not texto:
+        return texto
+    texto = _WHATSAPP_CTA_RE.sub(" ", texto)
+    texto = _CAMINHO_APURACAO_RE.sub(" ", texto)
+    texto = _META_PARCERIA_RE.sub(" ", texto)
+    texto = _VEJA_PARCERIA_RE.sub(" ", texto)
+    texto = _FIM_DE_SEMANA_INICIATIVAS_RE.sub(" ", texto)
+    texto = _CHECADO_POR_TERCEIROS_RE.sub(" ", texto)
+    texto = _DIREITOS_RESERVADOS_RE.sub(" ", texto)
+    return re.sub(r"\s+", " ", texto).strip()
+
+tem_caminho_apuracao = df["corpo_artigo"].map(
+    lambda t: bool(re.search(r"caminho\s+da\s+apura[cç][aã]o", t, re.IGNORECASE)) if isinstance(t, str) else False
+)
+print('Itens com a frase "caminho da apuração", por grupo:')
+tab_ca = pd.crosstab(df["rotulo_grupo"], tem_caminho_apuracao)
+print(tab_ca)
+print((tab_ca.div(tab_ca.sum(axis=1), axis=0) * 100).round(1))
+
+# Guarda a versão anterior (Seção 3.5, já sem nav/rodapé mas ainda com o
+# boilerplate de CTA/metodologia) para comparação antes/depois
+df["alvo_ataque_texto_antes_3_5b"] = df["alvo_ataque_texto"]
+
+df["corpo_limpo"] = df["corpo_artigo"].map(strip_known_boilerplate)
+df["corpo_norm"] = df["corpo_limpo"].map(normalize_text)
+df["vetor_midia_texto"] = df["corpo_norm"].map(vetor_midia)
+df["alvo_ataque_texto"] = df["corpo_norm"].map(alvo_ataque_corpo)
+
+mudou = (df["alvo_ataque_texto_antes_3_5b"] != df["alvo_ataque_texto"]).sum()
+print(f"\nalvo_ataque_texto mudou de classificação em {mudou}/{len(df)} itens após a limpeza")
+print(pd.crosstab(df["rotulo_grupo"], df["alvo_ataque_texto"]))
+print()
+print(
+    df.loc[df["alvo_ataque_texto_antes_3_5b"] != df["alvo_ataque_texto"],
+           ["rotulo_grupo", "alvo_ataque_texto_antes_3_5b", "alvo_ataque_texto"]]
+    .value_counts().to_string()
+)
+df = df.drop(columns=["alvo_ataque_texto_antes_3_5b", "corpo_limpo"])
+""")
+
+md("""**Leitura:** a maioria absoluta das mudanças é do grupo IA saindo de `urna_processo` para `indeterminado` — ou seja, **quase todo item que a Seção 3.5 classificava como "ataque ao processo/urna" no grupo IA era, na verdade, apenas um item que continha a frase-modelo "o caminho da apuração"**, não um boato genuinamente sobre urna/biometria/código-fonte. Sobra só 1 item real de `urna_processo` no grupo IA depois da limpeza. **O achado da versão anterior da Seção 4.4b (chi2=76.172, V=0.371, "IA mais associado a urna_processo") não se sustenta — era, ele mesmo, um artefato, desta vez lexical em vez de viés de desenho amostral.** A versão final do teste (Seção 4.4b, abaixo) já usa as colunas corrigidas por esta seção.""")
 
 md("## 4. EDA descritiva")
 
@@ -315,8 +419,9 @@ print("\nComparação com a heurística de título (Seção 4.3):")
 print(f"  V de Cramér (título): {v_cramer:.3f}  |  V de Cramér (texto completo): {v_cramer_t:.3f}")
 """)
 
-md("""### 4.4b H4 revisitado com `alvo_ataque_texto` (versão corrigida, corpo do artigo)
-A Seção 4.4 encontrou n_IA=0 em `urna_processo` usando só o título. Antes de aceitar isso como achado, a Seção 3.5 já mostrou que a primeira tentativa de recalcular sobre texto completo estava contaminada (0% "indeterminado" no dataset inteiro — sinal claro de que "lula"/"bolsonaro"/"tse" apareciam por toda parte, não como sinal real do alvo do ataque). Com a heurística corrigida (dicionário podado, aplicado sobre `corpo_artigo` em vez do dump da página inteira), refazemos o teste.""")
+md("""### 4.4b H4 revisitado com `alvo_ataque_texto` (versão final — corpo do artigo, dicionário podado e boilerplate removido)
+
+As Seções 4.4 (só título) e uma versão anterior desta seção (corpo do artigo, sem a limpeza da 3.5b) chegaram a leituras diferentes de H4, e agora sabemos que as duas estavam parcialmente contaminadas — a primeira por um sinal fraco demais (título curto raramente menciona o alvo real), a segunda por um artefato lexical literal (a palavra "apuração" dentro de um quadro de metodologia padronizado, sem relação com o conteúdo do boato — ver Seção 3.5b). Com as duas correções aplicadas (dicionário podado da Seção 3.5 + boilerplate removido da Seção 3.5b), refazemos o teste pela terceira e, até onde esta auditoria conseguiu levar, mais confiável vez.""")
 
 code(r"""
 tabela_alvo_txt = pd.crosstab(df["rotulo_grupo"], df["alvo_ataque_texto"])
@@ -324,26 +429,37 @@ print(tabela_alvo_txt)
 chi2_at, p_at, dof_at, _ = stats.chi2_contingency(tabela_alvo_txt)
 n_at = tabela_alvo_txt.to_numpy().sum()
 v_cramer_at = np.sqrt(chi2_at / (n_at * (min(tabela_alvo_txt.shape) - 1)))
-print(f"\nQui-quadrado (corpo do artigo, heurística corrigida): chi2={chi2_at:.3f}, p={p_at:.4f}, "
-      f"gl={dof_at}, V de Cramér={v_cramer_at:.3f}")
+print(f"\nQui-quadrado (corpo do artigo, heurística corrigida + boilerplate removido): chi2={chi2_at:.3f}, "
+      f"p={p_at:.4f}, gl={dof_at}, V de Cramér={v_cramer_at:.3f}")
 
-n_ia_urna_texto = tabela_alvo_txt.loc["IA", "urna_processo"] if "urna_processo" in tabela_alvo_txt.columns else 0
-n_ia_urna_titulo = tabela_alvo.loc["IA", "urna_processo"] if "urna_processo" in tabela_alvo.columns else 0
-pct_urna_ia = tabela_alvo_txt.loc["IA", "urna_processo"] / tabela_alvo_txt.loc["IA"].sum() * 100
-pct_urna_trad = tabela_alvo_txt.loc["Tradicional", "urna_processo"] / tabela_alvo_txt.loc["Tradicional"].sum() * 100
-print(f"\nn_IA em 'urna_processo' -- só título: {n_ia_urna_titulo} | corpo do artigo (corrigido): {n_ia_urna_texto}")
-print(f"% de urna_processo dentro de cada grupo (corpo do artigo): IA={pct_urna_ia:.1f}% | Tradicional={pct_urna_trad:.1f}%")
+det = df[df["alvo_ataque_texto"] != "indeterminado"].assign(
+    alvo_pessoa=lambda d: d["alvo_ataque_texto"] == "candidato_pessoa"
+)
+tabela_bin = pd.crosstab(det["rotulo_grupo"], det["alvo_pessoa"])
+print("\nSó itens com alvo determinado (candidato_pessoa vs. urna_processo):")
+print(tabela_bin)
+chi2_bin, p_bin, dof_bin, _ = stats.chi2_contingency(tabela_bin)
+n_bin = tabela_bin.to_numpy().sum()
+v_bin = np.sqrt(chi2_bin / (n_bin * (min(tabela_bin.shape) - 1)))
+print(f"Qui-quadrado (binário, só determinados): chi2={chi2_bin:.3f}, p={p_bin:.4f}, V de Cramér={v_bin:.3f}")
+
+pct_pessoa_final = det.groupby("rotulo_grupo")["alvo_pessoa"].mean().mul(100).round(1)
+print("\n% que ataca o candidato/pessoa, entre os itens com alvo determinado (versão final):\n", pct_pessoa_final)
+
+pct_indeterminado_final = (df["alvo_ataque_texto"] == "indeterminado").groupby(df["rotulo_grupo"]).mean().mul(100).round(1)
+print("\n% 'indeterminado' por grupo (versão final):\n", pct_indeterminado_final)
+
 print()
-print("O achado da Seção 4.4 NÃO se sustenta com a heurística corrigida -- na verdade o padrão se")
-print("INVERTE: com o dicionário contaminado (título curto ou texto completo sem corrigir), o grupo")
-print("IA nunca aparecia atacando o processo/urna. Com o corpo do artigo e o dicionário podado, o grupo")
-print("IA é PROPORCIONALMENTE MAIS classificado como 'urna_processo' que o grupo Tradicional -- o oposto")
-print("do achado contraintuitivo reportado nas versões anteriores deste notebook. Isso é evidência forte")
-print("de que aquele achado era inteiramente um artefato de heurística (título curto raramente menciona")
-print("'urna'/'biometria'/'código-fonte' mesmo quando o boato é sobre isso), não um padrão real do")
-print("fenômeno -- reforça por que este notebook trata heurísticas de palavra-chave com tanta cautela")
-print("antes de qualquer leitura de H4, e por que essa versão corrigida ainda precisa de validação")
-print("qualitativa manual antes da Fase 3, não menos que a anterior.")
+print("Com o boilerplate de metodologia removido (Secao 3.5b), o achado da versao anterior desta secao")
+print("('IA mais associado a urna_processo', chi2=76.172) NAO se sustenta -- era um artefato lexical:")
+print("a esmagadora maioria dos itens 'urna_processo' do grupo IA vinha so da frase-modelo 'o caminho")
+print("da apuracao'. A leitura final, com o boilerplate removido, e a OPOSTA: o grupo IA e muito mais")
+print("associado a ataques a pessoa do candidato do que o grupo Tradicional -- alinhado com a direcao")
+print("original de H4, e com um efeito (V de Cramer) maior do que qualquer uma das duas leituras")
+print("anteriores (titulo-so ou corpo contaminado). Ainda assim, boa parte do grupo IA fica")
+print("'indeterminado' nesta heuristica -- o resultado esta melhor fundamentado, mas continua sendo")
+print("uma heuristica de palavras-chave sobre um recorte de reportagem, nao uma leitura qualitativa dos")
+print("boatos, e merece validacao manual antes de qualquer conclusao definitiva sobre H4 no artigo/TCC.")
 """)
 
 md("""### 4.5 H3/H5 (preview real) — agora com data de publicação verdadeira
@@ -560,8 +676,8 @@ md(r"""## 8. Limitações e próximos passos
 - **`eleicoes-2022` é população completa** (419 de 419 itens, 35/35 páginas) — a amostra de 7 páginas usada na primeira versão deste notebook foi substituída por uma coleta integral a pedido do usuário. Três páginas (13, 27, 31) exigiram nova tentativa por um glitch de cache do site que repetia o conteúdo da página anterior; cada uma foi confirmada como conteúdo único antes de aceita, e a checagem de duplicidade de títulos no dataset final (Seção 2) não encontrou nenhuma duplicata.
 - **`rotulo_grupo` foi auditado contra contaminação entre tags** (Seção 4.1) — nenhum título aparece sob mais de uma tag pesquisada, então a atribuição IA vs. Tradicional pela tag de busca é segura para este dataset.
 - **`tema` tem cobertura parcial** (Seção 4.2) — é uma anotação editorial opcional, não presente em todos os itens (mais comum dentro do grupo IA do que fora dele). Qualquer leitura de `tema` deve declarar o `n` efetivo, não `n=553`.
-- **Contaminação lexical em `alvo_ataque_texto`: identificada E corrigida nesta versão** (Seção 3.5). Uma primeira tentativa de recalcular `vetor_midia`/`alvo_ataque` sobre `texto_completo` (dump da página inteira) gerou 0.0% de "indeterminado" em `alvo_ataque` no dataset inteiro — sinal de que a nuvem de tags do rodapé (presente em toda página do site, com nomes como "Lula"/"Bolsonaro"/"TSE") estava contaminando o resultado, não um sinal real do alvo do boato. Corrigido isolando `corpo_artigo` (só o texto do artigo, sem nav/menu/rodapé — coluna gerada em `scripts/build_dataset_b_completo.py`) e removendo do dicionário as palavras genéricas demais para o corpo inteiro (`"lula"`, `"bolsonaro"`, `"tse"`). Com a correção, `alvo_ataque_texto` volta a ter uma taxa de "indeterminado" (43.8%) da mesma ordem da versão por título (37.4%), não mais zero. `vetor_midia_texto` não precisou da mesma poda (o dicionário de mídia não tinha palavras tão genéricas) mas também passou a usar `corpo_artigo`, por consistência.
-- **O achado de H4 (grupo IA nunca ataca "processo/urna") NÃO se sustentou depois da correção — e se inverteu (Seção 4.4b).** Com a heurística contaminada (título ou texto completo sem corrigir), o grupo IA nunca aparecia atacando o processo/urna. Com `corpo_artigo` e o dicionário corrigido, o grupo IA passa a ser PROPORCIONALMENTE MAIS classificado como `urna_processo` que o grupo Tradicional — o oposto do achado contraintuitivo reportado nas versões anteriores. Isso é evidência forte de que o achado original era inteiramente um artefato de heurística, não um padrão real — um lembrete de que resultados contraintuitivos baseados em heurística de palavra-chave merecem auditoria da heurística antes de qualquer interpretação substantiva. A versão corrigida ainda é heurística e precisa de validação qualitativa manual antes da Fase 3.
+- **Contaminação lexical em `alvo_ataque_texto`: identificada E corrigida, em DUAS rodadas.** (1) Seção 3.5 — uma primeira tentativa de recalcular `vetor_midia`/`alvo_ataque` sobre `texto_completo` (dump da página inteira) gerou 0.0% de "indeterminado" em `alvo_ataque` no dataset inteiro — a nuvem de tags do rodapé (presente em toda página do site, com nomes como "Lula"/"Bolsonaro"/"TSE") estava contaminando o resultado. Corrigido isolando `corpo_artigo` (só o texto do artigo, sem nav/menu/rodapé) e removendo do dicionário as palavras genéricas demais (`"lula"`, `"bolsonaro"`, `"tse"`). (2) Seção 3.5b, descoberta na Fase 3 ao construir o classificador de ML (`models/`) — mesmo dentro de `corpo_artigo` restava um quadro de metodologia padronizado ("o caminho da apuração...") presente em 86.9% dos itens IA contra 5.3% dos Tradicionais, e a palavra "apuração" é literalmente uma das palavras-chave de `urna_processo`. Corrigido removendo esse boilerplate (mesma limpeza usada em `models/src/models_pkg/data/boilerplate.py`) antes de recalcular. `vetor_midia_texto` não foi afetado por nenhuma das duas rodadas (0 itens mudaram de classificação); `alvo_ataque_texto` mudou bastante nas duas.
+- **O achado de H4 mudou de direção DUAS vezes ao longo dessas correções — a versão final é a Seção 4.4b.** Com a heurística totalmente contaminada (só título, ou dicionário genérico demais), o grupo IA nunca aparecia atacando o processo/urna. Depois da 1ª correção (Seção 3.5), o padrão parecia se inverter: IA passava a ser proporcionalmente MAIS `urna_processo` que o Tradicional (chi2=76.172, p<0.0001, V=0.371) — esse foi o resultado registrado nas versões anteriores deste notebook e no README do projeto. A 2ª correção (Seção 3.5b) mostrou que esse resultado era, ele mesmo, um artefato lexical: a esmagadora maioria dos itens "urna_processo" do grupo IA só carregava essa etiqueta por causa da frase-modelo "o caminho da apuração", sem relação com o conteúdo do boato. Com o boilerplate removido, o padrão se inverte de novo — desta vez com um efeito mais forte (V de Cramér maior) e alinhado com a direção original de H4: o grupo IA é muito mais associado a ataques à pessoa do candidato do que o grupo Tradicional. **Lição registrada duas vezes neste notebook:** um achado contraintuitivo baseado em heurística de palavra-chave pede auditoria da heurística antes de qualquer interpretação substantiva — e essa auditoria pode precisar de mais de uma rodada.
 - **O confundimento de desenho amostral em `dias_para_eleicao` foi identificado E corrigido nesta versão (Seção 4.5).** O teste ingênuo (toda a amostra) encontra uma diferença grande e altamente significativa (mediana Tradicional ≈ -2 dias do 1º turno; mediana IA ≈ +140 dias; Mann-Whitney p<0.0001) — mas boa parte dela vem de como as tags foram definidas: `eleicoes-2022` (quase todo o grupo Tradicional) é um recorte por ano eleitoral (89% dos itens publicados no próprio ano do pleito), enquanto `inteligencia-artificial` é um recorte por tema, sem filtro de proximidade eleitoral (77% publicados em 2024-2025, anos sem eleição geral). Corrigido restringindo a comparação a uma janela temporal equivalente ao redor da eleição para os dois grupos: com janelas de ±200 ou ±180 dias, **a diferença deixa de ser estatisticamente significativa** (p≈0.66 e p≈0.78, contra p<0.0001 no teste ingênuo). Conclusão honesta: quase todo o efeito do teste ingênuo era o confundimento de amostragem, não H5 — este dataset, do jeito que foi coletado, não sustenta a alegação de aceleração temporal do grupo IA. Não é uma refutação de H5 (a amostra IA fica pequena dentro da janela estreita, n=47-52), só uma correção do teste anterior. Fase 3 precisa de uma coleta desenhada especificamente para isolar esse efeito.
 - **Validação cruzada informal via `vetor_midia`** (Seção 6.1, baseada na versão por título): a baseline Tradicional do Dataset B e o Dataset A inteiro convergem de forma consistente (~29-31% vídeo, ~59-61% indeterminado) apesar de serem coletas independentes — evidência indireta de que a heurística não é ruído aleatório. O grupo IA se destaca claramente das duas baselines (~48% audiovisual vs. ~32-33%). Essa comparação ainda usa a versão por título dos dois lados (Dataset A só tem título+resumo, não o corpo completo do TSE) — não é diretamente comparável à versão de texto completo introduzida nesta versão só para o Dataset B.
 - **Teste de Mann-Whitney para `dias_para_eleicao`** (Seção 4.5) assume que as duas amostras (IA/Tradicional) são independentes, o que vale aqui (nenhum item pertence aos dois grupos, Seção 4.1), mas não controla por possível viés de cobertura do Aos Fatos ao longo do tempo (ex.: se a agência passou a publicar mais checagens de IA especificamente a partir de um certo ano, isso confundiria "aceleração perto da eleição" com "aumento geral de cobertura do tema IA"). Não investigado nesta versão — fica para a Fase 3.

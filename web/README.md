@@ -58,12 +58,42 @@ Isso pressupõe que `/web` roda de dentro do monorepo, com `../data/processed/`
 acessível no disco (é o caso do `npm run dev`/`npm run build` normais a
 partir de `web/`).
 
-**Fallback de deploy standalone (implementado):** se `/web` algum dia for
-implantado sozinho — sem o restante do repositório disponível no servidor —,
-`getDatasetCSummary()` (`src/lib/dataset-c.ts`) detecta que o CSV não está em
-nenhum dos caminhos esperados e cai automaticamente para um snapshot JSON
-estático, em vez de mostrar erro ou dado inventado. Passo a passo para gerar
-esse snapshot antes de um deploy standalone:
+**No Vercel, isso também é o caso — configurado, não automático.** Por
+padrão, um deploy do Vercel com "Root Directory" = `web` empacotaria só o
+que está dentro de `web/`, deixando `../data/` de fora e forçando o painel
+a cair sempre para o snapshot (inclusive o feed de checagens, que não tem
+fallback nenhum — ver abaixo). `next.config.ts` resolve isso com
+`outputFileTracingRoot` (sobe a raiz de rastreamento de arquivos do Next
+para a raiz do monorepo) + `outputFileTracingIncludes` (inclui
+explicitamente `../data/processed/dataset_c_unificado.csv` no pacote de
+`/` e `/metodologia`, já que o caminho é montado em runtime — `path.join(
+process.cwd(), "..", ...)` — e o rastreador estático do Next não consegue
+inferir essa dependência sozinho). Confirmado localmente: depois de
+`npm run build`, o CSV aparece de fato em
+`.next/server/app/page.js.nft.json` (o arquivo que descreve exatamente o
+que o Vercel empacota para aquela função serverless), resolvendo para o
+caminho real do arquivo. **Falta um passo que só dá para fazer no painel
+do Vercel:** em Project Settings → General → Root Directory, habilitar
+"Include source files outside of the Root Directory in the Build Step" —
+sem isso, o Vercel nem baixa `../data/` no ambiente de build, e a
+configuração do Next não tem o que incluir. Depois do primeiro deploy,
+vale conferir na prática que o painel real (não só o snapshot) está sendo
+servido — ex.: adicionar um item novo ao CSV localmente e ver se ele
+aparece no deploy sem precisar regenerar o snapshot.
+
+**Fallback de deploy standalone (mantido como rede de segurança):** mesmo
+com a configuração acima, `getDatasetCSummary()` (`src/lib/dataset-c.ts`)
+continua caindo para um snapshot JSON estático se o CSV não for encontrado
+— por exemplo, se o toggle do Vercel acima não estiver marcado, ou em um
+deploy realmente isolado (só a pasta `web/` copiada manualmente, sem passar
+pelo build do Next com as opções de tracing). Isso cobre o resumo/gráficos;
+o feed de checagens (`getChecagensRecentes()`) não tem esse fallback e
+continua exigindo o CSV real — na prática, deixa de ser um problema assim
+que o tracing acima estiver configurado corretamente, mas se algo nessa
+configuração falhar, o feed é a primeira coisa a mostrar "indisponível".
+Passo a passo para gerar o snapshot (necessário de qualquer forma como
+rede de segurança, e obrigatório se você optar por não configurar o
+tracing acima):
 
 ```bash
 # a partir da raiz do repo, com o CSV do Dataset C já gerado

@@ -62,7 +62,12 @@ export function TrendIndexChart({
   return (
     <div role="img" aria-label={resumoTextual(pontos, marcosEleitorais)}>
       <ResponsiveContainer width="100%" height={280}>
-        <ComposedChart data={dados} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        {/* margin.top maior que os outros lados: o label do ReferenceLine
+            ("1º turno YYYY") é desenhado acima da área do gráfico e
+            ficava cortado/sobreposto ao eixo Y com pouco espaço — mesmo
+            ajuste feito em monthly-volume-chart.tsx (ver docs/PRD.md
+            Seção 16/18). */}
+        <ComposedChart data={dados} margin={{ top: 28, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
           <XAxis
             dataKey="mes"

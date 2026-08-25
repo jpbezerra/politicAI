@@ -78,7 +78,12 @@ export function MonthlyVolumeChart({
   return (
     <div role="img" aria-label={resumoTextual(data, marcosEleitorais)}>
       <ResponsiveContainer width="100%" height={280}>
-        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        {/* margin.top maior que os outros lados de propósito: o label do
+            ReferenceLine ("1º turno YYYY") é desenhado acima da área do
+            gráfico, e com pouco espaço ele ficava cortado/sobreposto ao
+            valor máximo do eixo Y (achado no deploy real, ver
+            docs/PRD.md Seção 16/18). */}
+        <BarChart data={data} margin={{ top: 28, right: 8, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
           <XAxis
             dataKey="mes"

@@ -1,0 +1,42 @@
+[
+  {
+    "versao_id": "v0-topic-2026.08_20260824T195305Z",
+    "versao_modelo": "v0-topic-2026.08",
+    "gerado_em": "2026-08-24T19:53:05.623865+00:00",
+    "acuracia_teste": 0.990990990990991,
+    "f1_ia_teste": 0.9795918367346939,
+    "path": "versions/v0-topic-2026.08_20260824T195305Z"
+  },
+  {
+    "versao_id": "v0-topic-2026.08_20260824T200336Z",
+    "versao_modelo": "v0-topic-2026.08",
+    "gerado_em": "2026-08-24T20:03:36.879852+00:00",
+    "acuracia_teste": 0.990990990990991,
+    "f1_ia_teste": 0.9795918367346939,
+    "path": "versions/v0-topic-2026.08_20260824T200336Z"
+  },
+  {
+    "versao_id": "v0-topic-2026.08_20260824T221549Z",
+    "versao_modelo": "v0-topic-2026.08",
+    "gerado_em": "2026-08-24T22:15:49.258103+00:00",
+    "acuracia_teste": 0.990990990990991,
+    "f1_ia_teste": 0.9795918367346939,
+    "path": "versions/v0-topic-2026.08_20260824T221549Z"
+  },
+  {
+    "versao_id": "v0-topic-2026.08-corte2023_20260825T184351Z",
+    "versao_modelo": "v0-topic-2026.08-corte2023",
+    "gerado_em": "2026-08-25T18:43:51.865803+00:00",
+    "acuracia_teste": 1.0,
+    "f1_ia_teste": 1.0,
+    "path": "versions/v0-topic-2026.08-corte2023_20260825T184351Z"
+  },
+  {
+    "versao_id": "v0-topic-2026.08-corte2022a2026_20260825T185234Z",
+    "versao_modelo": "v0-topic-2026.08-corte2022a2026",
+    "gerado_em": "2026-08-25T18:52:34.462569+00:00",
+    "acuracia_teste": 0.9908256880733946,
+    "f1_ia_teste": 0.9803921568627451,
+    "path": "versions/v0-topic-2026.08-corte2022a2026_20260825T185234Z"
+  }
+]

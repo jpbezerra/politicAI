@@ -1,0 +1,217 @@
+{
+  "gerado_em": "2026-08-25T18:52:34.462569+00:00",
+  "versao_modelo": "v0-topic-2026.08-corte2022a2026",
+  "n_treino": 432,
+  "n_teste": 109,
+  "hiperparametros_finais": {
+    "C": 0.1,
+    "ngram_range": [
+      1,
+      1
+    ],
+    "min_df": 1
+  },
+  "tuning": {
+    "best_params": {
+      "clf__C": 0.1,
+      "tfidf__min_df": 1,
+      "tfidf__ngram_range": [
+        1,
+        1
+      ]
+    },
+    "best_score_f1_ia_validacao": 1.0,
+    "top5_configuracoes": [
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 1,
+          "tfidf__ngram_range": [
+            1,
+            1
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 1,
+          "tfidf__ngram_range": [
+            1,
+            2
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 2,
+          "tfidf__ngram_range": [
+            1,
+            1
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 2,
+          "tfidf__ngram_range": [
+            1,
+            2
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 3,
+          "tfidf__ngram_range": [
+            1,
+            1
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      }
+    ]
+  },
+  "validacao_cruzada": {
+    "n_splits": 5,
+    "seed": 42,
+    "metricas": {
+      "acuracia": {
+        "media": 0.9907244052392408,
+        "desvio_padrao": 0.008694546124915143,
+        "por_fold": [
+          1.0,
+          0.9885,
+          0.9884,
+          1.0,
+          0.9767
+        ]
+      },
+      "f1_ia": {
+        "media": 0.9786324786324787,
+        "desvio_padrao": 0.020583922356909916,
+        "por_fold": [
+          1.0,
+          0.9744,
+          0.9744,
+          1.0,
+          0.9444
+        ]
+      },
+      "precisao_ia": {
+        "media": 0.99,
+        "desvio_padrao": 0.020000000000000018,
+        "por_fold": [
+          1.0,
+          1.0,
+          0.95,
+          1.0,
+          1.0
+        ]
+      },
+      "recall_ia": {
+        "media": 0.9689473684210526,
+        "desvio_padrao": 0.04185451653067588,
+        "por_fold": [
+          1.0,
+          0.95,
+          1.0,
+          1.0,
+          0.8947
+        ]
+      },
+      "roc_auc": {
+        "media": 1.0,
+        "desvio_padrao": 0.0,
+        "por_fold": [
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "acuracia": 0.9908256880733946,
+  "roc_auc": 1.0,
+  "por_classe": {
+    "Tradicional": {
+      "precisao": 1.0,
+      "recall": 0.9880952380952381,
+      "f1": 0.9940119760479041,
+      "n": 84
+    },
+    "IA": {
+      "precisao": 0.9615384615384616,
+      "recall": 1.0,
+      "f1": 0.9803921568627451,
+      "n": 25
+    }
+  },
+  "matriz_confusao": {
+    "labels": [
+      "Tradicional",
+      "IA"
+    ],
+    "valores": [
+      [
+        83,
+        1
+      ],
+      [
+        0,
+        25
+      ]
+    ],
+    "nota": "linhas = rótulo real, colunas = predição"
+  },
+  "top_features": {
+    "mais_associados_a_IA": [
+      "ia",
+      "artificial",
+      "inteligência",
+      "gerado",
+      "gerada",
+      "busca",
+      "indícios",
+      "reversa",
+      "conteúdos",
+      "imagem",
+      "trump",
+      "manipulado",
+      "conteúdo",
+      "real",
+      "gravação"
+    ],
+    "mais_associados_a_Tradicional": [
+      "eleitoral",
+      "sociais",
+      "postagens",
+      "tse",
+      "lula",
+      "luiz",
+      "inácio",
+      "votos",
+      "bolsonaro",
+      "silva",
+      "eleições",
+      "candidato",
+      "pt",
+      "urnas",
+      "2022"
+    ]
+  }
+}

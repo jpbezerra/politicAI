@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Log de opt-in de submissões do Sensor de IA (dado potencialmente sensível
+# enviado por usuários — nunca deve ser versionado; ver api/main.py).
+data/consentimento_log.jsonl

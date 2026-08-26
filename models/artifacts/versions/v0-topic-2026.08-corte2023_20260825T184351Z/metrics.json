@@ -1,0 +1,217 @@
+{
+  "gerado_em": "2026-08-25T18:43:51.865803+00:00",
+  "versao_modelo": "v0-topic-2026.08-corte2023",
+  "n_treino": 135,
+  "n_teste": 34,
+  "hiperparametros_finais": {
+    "C": 0.1,
+    "ngram_range": [
+      1,
+      1
+    ],
+    "min_df": 1
+  },
+  "tuning": {
+    "best_params": {
+      "clf__C": 0.1,
+      "tfidf__min_df": 1,
+      "tfidf__ngram_range": [
+        1,
+        1
+      ]
+    },
+    "best_score_f1_ia_validacao": 1.0,
+    "top5_configuracoes": [
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 1,
+          "tfidf__ngram_range": [
+            1,
+            1
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 1,
+          "tfidf__ngram_range": [
+            1,
+            2
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 2,
+          "tfidf__ngram_range": [
+            1,
+            1
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 2,
+          "tfidf__ngram_range": [
+            1,
+            2
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      },
+      {
+        "params": {
+          "clf__C": 0.1,
+          "tfidf__min_df": 3,
+          "tfidf__ngram_range": [
+            1,
+            1
+          ]
+        },
+        "f1_ia_validacao": 1.0,
+        "rank": 1
+      }
+    ]
+  },
+  "validacao_cruzada": {
+    "n_splits": 5,
+    "seed": 42,
+    "metricas": {
+      "acuracia": {
+        "media": 0.9407407407407407,
+        "desvio_padrao": 0.029629629629629624,
+        "por_fold": [
+          0.9259,
+          0.963,
+          0.963,
+          0.8889,
+          0.963
+        ]
+      },
+      "f1_ia": {
+        "media": 0.9603846959660913,
+        "desvio_padrao": 0.01769756456140444,
+        "por_fold": [
+          0.95,
+          0.973,
+          0.9744,
+          0.9302,
+          0.9744
+        ]
+      },
+      "precisao_ia": {
+        "media": 0.9448654244306418,
+        "desvio_padrao": 0.05173861262672562,
+        "por_fold": [
+          0.9048,
+          1.0,
+          0.95,
+          0.8696,
+          1.0
+        ]
+      },
+      "recall_ia": {
+        "media": 0.9794736842105263,
+        "desvio_padrao": 0.025153269779681117,
+        "por_fold": [
+          1.0,
+          0.9474,
+          1.0,
+          1.0,
+          0.95
+        ]
+      },
+      "roc_auc": {
+        "media": 0.9972556390977443,
+        "desvio_padrao": 0.003365869065503653,
+        "por_fold": [
+          0.9934,
+          1.0,
+          1.0,
+          1.0,
+          0.9929
+        ]
+      }
+    }
+  },
+  "acuracia": 1.0,
+  "roc_auc": 1.0,
+  "por_classe": {
+    "Tradicional": {
+      "precisao": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "n": 9
+    },
+    "IA": {
+      "precisao": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "n": 25
+    }
+  },
+  "matriz_confusao": {
+    "labels": [
+      "Tradicional",
+      "IA"
+    ],
+    "valores": [
+      [
+        9,
+        0
+      ],
+      [
+        0,
+        25
+      ]
+    ],
+    "nota": "linhas = rótulo real, colunas = predição"
+  },
+  "top_features": {
+    "mais_associados_a_IA": [
+      "ia",
+      "artificial",
+      "inteligência",
+      "gerado",
+      "gerada",
+      "imagem",
+      "vídeo",
+      "imagens",
+      "indícios",
+      "gravação",
+      "busca",
+      "reversa",
+      "ferramenta",
+      "água",
+      "registros"
+    ],
+    "mais_associados_a_Tradicional": [
+      "eleições",
+      "2022",
+      "eleitoral",
+      "tse",
+      "urnas",
+      "eleição",
+      "votos",
+      "pleito",
+      "fraude",
+      "turno",
+      "voto",
+      "lula",
+      "bolsonaro",
+      "eletrônicas",
+      "tribunal"
+    ]
+  }
+}

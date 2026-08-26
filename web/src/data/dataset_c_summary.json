@@ -1,0 +1,428 @@
+{
+  "gerado_em": "2026-08-25T23:43:49.138142+00:00",
+  "gerado_por": "scripts/export_dashboard_data.py",
+  "fonte_dados": "data/processed/dataset_c_unificado.csv (Datasets A + B unificados, Fase 2 do projeto)",
+  "aviso": "Estes números refletem uma coleta pontual, não um feed ao vivo. A lente de IA usa rótulo editorial real apenas para os itens de origem 'B' (Aos Fatos); itens de origem 'A' não têm rótulo editorial de IA disponível (ver docs/PRD.md).",
+  "datas_turno_1": {
+    "2018": "2018-10-07",
+    "2020": "2020-11-15",
+    "2022": "2022-10-02",
+    "2024": "2024-10-06",
+    "2026": "2026-10-04"
+  },
+  "resumo_geral": {
+    "n_total": 769,
+    "n_ia": 122,
+    "n_tradicional": 647,
+    "pct_ia": 15.9,
+    "n_rotulo_editorial_confiavel": 541
+  },
+  "serie_mensal": [
+    {
+      "mes": "2022-01",
+      "total": 2,
+      "ia": 0,
+      "tradicional": 2
+    },
+    {
+      "mes": "2022-02",
+      "total": 9,
+      "ia": 0,
+      "tradicional": 9
+    },
+    {
+      "mes": "2022-03",
+      "total": 4,
+      "ia": 0,
+      "tradicional": 4
+    },
+    {
+      "mes": "2022-04",
+      "total": 8,
+      "ia": 0,
+      "tradicional": 8
+    },
+    {
+      "mes": "2022-05",
+      "total": 8,
+      "ia": 0,
+      "tradicional": 8
+    },
+    {
+      "mes": "2022-06",
+      "total": 38,
+      "ia": 0,
+      "tradicional": 38
+    },
+    {
+      "mes": "2022-07",
+      "total": 44,
+      "ia": 0,
+      "tradicional": 44
+    },
+    {
+      "mes": "2022-08",
+      "total": 50,
+      "ia": 0,
+      "tradicional": 50
+    },
+    {
+      "mes": "2022-09",
+      "total": 80,
+      "ia": 0,
+      "tradicional": 80
+    },
+    {
+      "mes": "2022-10",
+      "total": 162,
+      "ia": 0,
+      "tradicional": 162
+    },
+    {
+      "mes": "2022-11",
+      "total": 101,
+      "ia": 0,
+      "tradicional": 101
+    },
+    {
+      "mes": "2022-12",
+      "total": 45,
+      "ia": 0,
+      "tradicional": 45
+    },
+    {
+      "mes": "2023-01",
+      "total": 4,
+      "ia": 0,
+      "tradicional": 4
+    },
+    {
+      "mes": "2023-02",
+      "total": 1,
+      "ia": 0,
+      "tradicional": 1
+    },
+    {
+      "mes": "2023-03",
+      "total": 2,
+      "ia": 1,
+      "tradicional": 1
+    },
+    {
+      "mes": "2023-04",
+      "total": 4,
+      "ia": 2,
+      "tradicional": 2
+    },
+    {
+      "mes": "2023-05",
+      "total": 4,
+      "ia": 0,
+      "tradicional": 4
+    },
+    {
+      "mes": "2023-06",
+      "total": 3,
+      "ia": 0,
+      "tradicional": 3
+    },
+    {
+      "mes": "2023-07",
+      "total": 8,
+      "ia": 0,
+      "tradicional": 8
+    },
+    {
+      "mes": "2023-08",
+      "total": 3,
+      "ia": 1,
+      "tradicional": 2
+    },
+    {
+      "mes": "2023-09",
+      "total": 4,
+      "ia": 0,
+      "tradicional": 4
+    },
+    {
+      "mes": "2023-10",
+      "total": 3,
+      "ia": 0,
+      "tradicional": 3
+    },
+    {
+      "mes": "2023-11",
+      "total": 2,
+      "ia": 0,
+      "tradicional": 2
+    },
+    {
+      "mes": "2023-12",
+      "total": 3,
+      "ia": 0,
+      "tradicional": 3
+    },
+    {
+      "mes": "2024-01",
+      "total": 3,
+      "ia": 0,
+      "tradicional": 3
+    },
+    {
+      "mes": "2024-02",
+      "total": 4,
+      "ia": 1,
+      "tradicional": 3
+    },
+    {
+      "mes": "2024-03",
+      "total": 6,
+      "ia": 1,
+      "tradicional": 5
+    },
+    {
+      "mes": "2024-04",
+      "total": 9,
+      "ia": 2,
+      "tradicional": 7
+    },
+    {
+      "mes": "2024-05",
+      "total": 6,
+      "ia": 1,
+      "tradicional": 5
+    },
+    {
+      "mes": "2024-06",
+      "total": 2,
+      "ia": 2,
+      "tradicional": 0
+    },
+    {
+      "mes": "2024-07",
+      "total": 1,
+      "ia": 1,
+      "tradicional": 0
+    },
+    {
+      "mes": "2024-08",
+      "total": 11,
+      "ia": 4,
+      "tradicional": 7
+    },
+    {
+      "mes": "2024-09",
+      "total": 3,
+      "ia": 2,
+      "tradicional": 1
+    },
+    {
+      "mes": "2024-10",
+      "total": 7,
+      "ia": 4,
+      "tradicional": 3
+    },
+    {
+      "mes": "2024-11",
+      "total": 3,
+      "ia": 3,
+      "tradicional": 0
+    },
+    {
+      "mes": "2024-12",
+      "total": 3,
+      "ia": 3,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-01",
+      "total": 4,
+      "ia": 4,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-02",
+      "total": 7,
+      "ia": 3,
+      "tradicional": 4
+    },
+    {
+      "mes": "2025-03",
+      "total": 3,
+      "ia": 2,
+      "tradicional": 1
+    },
+    {
+      "mes": "2025-04",
+      "total": 3,
+      "ia": 3,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-05",
+      "total": 8,
+      "ia": 8,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-06",
+      "total": 1,
+      "ia": 1,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-07",
+      "total": 5,
+      "ia": 5,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-08",
+      "total": 8,
+      "ia": 8,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-09",
+      "total": 5,
+      "ia": 5,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-10",
+      "total": 5,
+      "ia": 5,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-11",
+      "total": 15,
+      "ia": 15,
+      "tradicional": 0
+    },
+    {
+      "mes": "2025-12",
+      "total": 4,
+      "ia": 4,
+      "tradicional": 0
+    },
+    {
+      "mes": "2026-01",
+      "total": 7,
+      "ia": 6,
+      "tradicional": 1
+    },
+    {
+      "mes": "2026-02",
+      "total": 6,
+      "ia": 6,
+      "tradicional": 0
+    },
+    {
+      "mes": "2026-03",
+      "total": 4,
+      "ia": 4,
+      "tradicional": 0
+    },
+    {
+      "mes": "2026-04",
+      "total": 8,
+      "ia": 4,
+      "tradicional": 4
+    },
+    {
+      "mes": "2026-05",
+      "total": 6,
+      "ia": 4,
+      "tradicional": 2
+    },
+    {
+      "mes": "2026-06",
+      "total": 5,
+      "ia": 2,
+      "tradicional": 3
+    },
+    {
+      "mes": "2026-07",
+      "total": 10,
+      "ia": 2,
+      "tradicional": 8
+    },
+    {
+      "mes": "2026-08",
+      "total": 5,
+      "ia": 3,
+      "tradicional": 2
+    }
+  ],
+  "distribuicao_por_fonte": [
+    {
+      "fonte": "B",
+      "n": 541
+    },
+    {
+      "fonte": "A",
+      "n": 228
+    }
+  ],
+  "distribuicao_por_tema": [
+    {
+      "tema": "Não classificado",
+      "n": 400,
+      "n_ia": 9
+    },
+    {
+      "tema": "Sistema Eletrônico de Votação",
+      "n": 102,
+      "n_ia": 0
+    },
+    {
+      "tema": "boataria política",
+      "n": 71,
+      "n_ia": 48
+    },
+    {
+      "tema": "Processo Eleitoral",
+      "n": 41,
+      "n_ia": 0
+    },
+    {
+      "tema": "inteligência artificial",
+      "n": 40,
+      "n_ia": 40
+    },
+    {
+      "tema": "Instituição/Justiça Eleitoral",
+      "n": 37,
+      "n_ia": 0
+    },
+    {
+      "tema": "Candidato/Partido",
+      "n": 29,
+      "n_ia": 0
+    },
+    {
+      "tema": "Outros",
+      "n": 19,
+      "n_ia": 0
+    }
+  ],
+  "distribuicao_veredito": [
+    {
+      "veredito": "falso",
+      "n": 617
+    },
+    {
+      "veredito": "nao_classificado",
+      "n": 101
+    },
+    {
+      "veredito": "parcialmente_falso",
+      "n": 50
+    },
+    {
+      "veredito": "nao_falso",
+      "n": 1
+    }
+  ]
+}

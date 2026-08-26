@@ -1,0 +1,39 @@
+# Configuração do baseline v0: classificador de TEMÁTICA de IA
+# (ver models/README.md e ../docs/PRD.md, Seção 4.1, para a distinção
+# entre "temática" e "autoria" — este modelo resolve só o primeiro problema).
+
+seed: 42
+
+data:
+  # Única fonte com rótulo editorial real de IA (ver models/README.md,
+  # "Por que só o Dataset B" para a justificativa de não incluir o Dataset A).
+  path: "../data/processed/dataset_b_aosfatos_enriquecido.csv"
+  text_columns: ["titulo", "corpo_artigo"]
+  label_column: "rotulo_grupo"
+  positive_label: "IA"
+
+split:
+  test_size: 0.2
+  val_size: 0.1 # fração do restante (treino+val), aplicada após separar o teste
+  stratify: true
+
+features:
+  max_features: 8000
+  ngram_range: [1, 2]
+  min_df: 2
+  sublinear_tf: true
+
+model:
+  type: "logistic_regression"
+  C: 1.0
+  class_weight: "balanced"
+  max_iter: 2000
+
+artifact:
+  output_path: "artifacts/ia_topic_classifier_v0.joblib"
+  metrics_path: "artifacts/ia_topic_classifier_v0_metrics.json"
+  model_card_path: "artifacts/ia_topic_classifier_v0_model_card.md"
+  # Sufixo "-corte2022a2026" identifica treinos feitos sobre o Dataset B já
+  # restrito a checagens publicadas entre 01/01/2022 e 20/08/2026 (recorte
+  # pedido pela orientadora — ver docs/PRD.md, Seção 19).
+  version: "v0-topic-2026.08-corte2022a2026"

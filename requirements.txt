@@ -4,6 +4,10 @@ matplotlib>=3.8
 seaborn>=0.13
 scipy>=1.11
 
+# usado só pelo notebook 03 (Dataset C unificado): TF-IDF/similaridade de
+# cosseno para detectar prováveis duplicatas (mesmo boato coberto por A e B)
+scikit-learn>=1.3
+
 # apenas para regenerar/executar os notebooks a partir dos scripts (não é
 # necessário só para abrir os .ipynb já prontos no Jupyter/VS Code)
 nbformat>=5.9

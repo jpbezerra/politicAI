@@ -18,7 +18,7 @@ Este notebook junta o **Dataset A** (`justicaeleitoral.jus.br/fato-ou-boato`, 32
 | | Dataset A (TSE) | Dataset B (Aos Fatos) |
 |---|---|---|
 | Rótulo IA vs. Tradicional | **heurística de regex sobre o título** — e o notebook `01` já mostrou, com investigação ao vivo no site, que ela dá 0% IA (nenhum item genuíno de IA foi encontrado nesta fonte) | **classificação editorial real** do próprio Aos Fatos (tag de busca `inteligencia-artificial`) |
-| Veredito | heurística de regex sobre o título (`veredito_estimado`, cobre ~56% dos itens) | classificação editorial real (`veredito`, vocabulário fechado do Aos Fatos) |
+| Veredito | **misto, por item**: texto real extraído do parágrafo "Por que é X" da página individual quando o template da checagem tem essa seção (`veredito_final`, 23,9% dos 322 itens originais — notebook `01`, Seção 3.2.1), com *fallback* para heurística de regex sobre o título nos ~76% restantes (`veredito_estimado`, cobre ~56% desse subconjunto) — `fonte_veredito` no Dataset C marca, item a item, qual dos dois foi usado | classificação editorial real (`veredito`, vocabulário fechado do Aos Fatos) |
 | Tema/categoria | heurística macro por regex (`categoria_macro`) | anotação editorial opcional (`tema`, cobertura parcial) |
 
 **Consequência direta que não deve ser escondida:** juntar A e B **não aumenta o poder estatístico do teste IA vs. Tradicional** — só o Dataset B contribui itens rotulados IA (122 deles). O que a unificação genuinamente contribui é: (1) uma baseline "Tradicional" muito maior e de duas fontes independentes (753 itens: 322 de A + 431 de B) para caracterizar desinformação eleitoral tradicional com mais robustez, formalizando com teste estatístico a validação cruzada que o notebook `02` já tinha feito de forma informal; (2) detecção de prováveis duplicatas entre as duas fontes (o mesmo boato coberto por ambas); e (3) uma base maior e harmonizada para os modelos mais complexos da Fase 3. Qualquer teste que precise comparar IA vs. Tradicional continua dependendo só do Dataset B — reforçado explicitamente ao longo deste notebook, não só aqui na introdução.
@@ -66,7 +66,7 @@ Mapeamento explícito de colunas — cada coluna do Dataset C carrega também `f
 | Coluna em C | De A | De B |
 |---|---|---|
 | `rotulo_ia` | `rotulo_ia_bin` (heurística, sempre "Tradicional") | `rotulo_grupo` (editorial real) |
-| `veredito_binario` | derivado de `veredito_estimado` (heurística) | derivado de `veredito` (editorial) |
+| `veredito_binario` | derivado de `veredito_final` (texto real da página quando existe, senão `veredito_estimado`/heurística — `fonte_veredito` distingue os dois) | derivado de `veredito` (editorial) |
 | `categoria_tema` | `categoria_macro` (heurística) | `tema` (editorial, opcional) |
 | `vetor_midia`, `alvo_ataque` | heurística sobre título+resumo | heurística sobre só o título (versão comparável a A) |
 | `vetor_midia_texto_corrigido`, `alvo_ataque_texto_corrigido` | não existe (`NaN`) | heurística corrigida sobre `corpo_artigo` (notebook `02`, Seção 3.5) — mais precisa, mas sem equivalente em A |
@@ -77,6 +77,13 @@ VEREDITO_MAP_A = {
     "Falso": "falso", "Falso (negação implícita)": "falso", "Mentira/Distorção": "falso",
     "Enganoso": "falso", "Boato": "falso", "Golpe/Scam": "falso",
     "Não classificado pelo padrão do título": None,
+    # As duas categorias abaixo só aparecem quando fonte_veredito_final ==
+    # "texto_real_pagina_individual" (palavra real extraída do parágrafo
+    # "Por que é X" da página, ver notebook 01, Seção 3.2.1) -- "Distorcido"
+    # mapeia para "parcialmente_falso", igual ao equivalente editorial do
+    # Dataset B (VEREDITO_MAP_B), não para "falso", porque é semanticamente
+    # o mesmo rótulo, não uma variação da heurística de título.
+    "Distorcido": "parcialmente_falso",
 }
 VEREDITO_MAP_B = {
     "falso": "falso", "não é bem assim": "parcialmente_falso", "distorcido": "parcialmente_falso",
@@ -91,9 +98,9 @@ df_a_h = pd.DataFrame({
     "dias_para_eleicao": df_a["dias_para_eleicao"],
     "rotulo_ia": df_a["rotulo_ia_bin"],
     "fonte_rotulo_ia": "heuristica_regex_titulo",
-    "veredito_original": df_a["veredito_estimado"],
-    "veredito_binario": df_a["veredito_estimado"].map(VEREDITO_MAP_A),
-    "fonte_veredito": "heuristica_regex_titulo",
+    "veredito_original": df_a["veredito_final"],
+    "veredito_binario": df_a["veredito_final"].map(VEREDITO_MAP_A),
+    "fonte_veredito": df_a["fonte_veredito_final"],
     "categoria_tema": df_a["categoria_macro"],
     "fonte_categoria_tema": "heuristica_regex_macro",
     "vetor_midia": df_a["vetor_midia"],
@@ -356,8 +363,8 @@ plt.tight_layout(); plt.show()
 md(r"""## 7. Limitações e próximos passos
 
 - **A unificação não aumenta o poder do teste IA vs. Tradicional.** Só o Dataset B contribui itens rotulados IA (122); o Dataset A contribui 322 itens 100% Tradicional (heurística, ver notebook `01`). Qualquer teste de H1/H2/H4 que compare IA vs. Tradicional continua limitado ao Dataset B — o que este notebook faz explicitamente em cada seção (Seções 5.2, 5.4), em vez de deixar implícito.
-- **`veredito_binario` mistura heurística (A) com editorial (B) quando testado pooled** (Seção 5.2) — o teste ingênuo (chi2=11.432, p=0.0033) infla a diferença aparente porque a heurística de A só reconhece "falso" ou "não classificado", nunca "parcialmente falso" ou "verdadeiro". O teste correto (só Dataset B, mesma metodologia editorial nos dois grupos: chi2=17.055, p=0.0002, V=0.181) é qualitativamente igual ao já reportado no notebook `02` (chi2=24.818, p=0.0001, V=0.212 — número diferente porque aqui `veredito_binario` colapsa "não é bem assim"/"distorcido" e exclui "(não informado)" em vez de tratá-lo como categoria própria) — é o teste do Dataset B, em qualquer uma das duas versões, que deve ser citado para H1, nunca o pooled.
-- **As duas baselines "Tradicional" (A e B) não são estatisticamente indistinguíveis em `vetor_midia`** (Seção 5.3: chi2=10.174, p=0.0376, V=0.116) — diferente da leitura informal do notebook `02`. O efeito é pequeno e concentrado na categoria "texto", plausivelmente por A calcular a heurística sobre título+resumo e B só sobre título (escopo de texto diferente, não necessariamente um sinal real de divergência do fenômeno) — mas registrado como diferença real, não arredondado para "convergem".
+- **`veredito_binario` mistura fontes de proveniência diferentes (A e B) quando testado pooled** (Seção 5.2) — o teste ingênuo (chi2=12.214, p=0.0022) mistura, do lado de A, os 23,9% dos itens (dos 322 originais) com texto real extraído da página individual (`fonte_veredito_final="texto_real_pagina_individual"`, ver notebook `01`, Seção 3.2.1) com os demais, ainda heurísticos por regex de título — e mistura isso, por sua vez, com a classificação 100% editorial do Dataset B, o que ainda infla a diferença aparente por metodologia, não necessariamente pelo fenômeno (a parcela heurística de A só reconhece "falso" ou omisso, nunca "parcialmente falso" ou "verdadeiro"). O teste correto (só Dataset B, mesma metodologia editorial nos dois grupos: chi2=17.243, p=0.0002, V=0.184, n=510) é qualitativamente igual ao já reportado no notebook `02` (chi2=24.818, p=0.0001, V=0.212 — número diferente porque aqui `veredito_binario` colapsa "não é bem assim"/"distorcido" e exclui "(não informado)" em vez de tratá-lo como categoria própria) — é o teste do Dataset B, em qualquer uma das duas versões, que deve ser citado para H1, nunca o pooled.
+- **As duas baselines "Tradicional" (A e B) SÃO estatisticamente indistinguíveis em `vetor_midia`** (Seção 5.3: chi2=8.143, p=0.0865, V=0.112, n=647 — não significativo a 5%) — número atualizado nesta revisão (a versão anterior deste texto, com chi2=10.174/p=0.0376, estava desatualizada em relação ao código já em vigor antes mesmo da extração de veredito real; mantido aqui só como nota de transparência, não é um efeito desta mudança). A leitura qualitativa muda: as duas fontes convergem em `vetor_midia`, consistente com a leitura informal do notebook `02` — sem diferença estatística detectável no nível de confiança usual (5%) para descartar essa convergência.
 - **H3/H5 pooled (Seção 5.4) confirma a correção do notebook 02, mesmo com a baseline Tradicional ampliada**: o efeito ingênuo (p<0.0001) desaparece nas janelas comparáveis (p≈0.44-0.47). Ampliar a amostra Tradicional não resolve o confundimento porque ele está inteiramente do lado do grupo IA (tag por tema, sem filtro de proximidade eleitoral) — precisa de uma coleta desenhada especificamente para isso na Fase 3, não de mais volume de dados Tradicionais.
 - **Detecção de duplicatas é por similaridade de título (TF-IDF + cosseno), com limiar escolhido por inspeção manual (0.5), não por um método supervisionado.** 10 pares foram marcados como prováveis duplicatas (`par_duplicado_provavel=True`); um teste de sensibilidade (Seção 5.5) mostrou que removê-los não muda o resultado do teste de veredito. A faixa de similaridade 0.3–0.5 (11 pares adicionais na Seção 3) contém candidatos mais ambíguos — não classificados automaticamente, ficam para revisão manual na Fase 3 se uma deduplicação mais agressiva for necessária.
 - **`vetor_midia_texto_corrigido` e `alvo_ataque_texto_corrigido` (a versão mais confiável, corpo do artigo, notebook 02 Seção 3.5) só existem para o Dataset B** — o Dataset A nunca teve o texto completo da checagem coletado, só título+resumo. Qualquer análise que precise da versão mais precisa dessas heurísticas fica limitada ao Dataset B; usar a versão comparável (só título) para os dois lados é a única forma honesta de comparar A e B nessas variáveis.

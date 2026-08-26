@@ -12,12 +12,14 @@ editorial — e, na amostra coletada, ela nunca marca nenhum item como IA
 Seção 4.1, e models/README.md para a discussão completa.
 
 Limitação de desenho conhecida (documentar sempre que este dataset for
-usado para treino/avaliação): os 553 itens do Dataset B foram coletados a
-partir de 3 buscas por tag diferentes, e o rótulo `rotulo_grupo` é
-perfeitamente colinear com a tag de busca:
+usado para treino/avaliação): os 553 itens coletados do Dataset B (541 após
+o recorte temporal de 01/01/2022 a 20/08/2026, ver docs/PRD.md Seção 19 —
+`data/raw/dataset_b_completo.csv` continua com os 553 originais) foram
+coletados a partir de 3 buscas por tag diferentes, e o rótulo `rotulo_grupo`
+é perfeitamente colinear com a tag de busca:
 
     tag_pesquisa               IA   Tradicional
-    eleicoes-2022               0           419
+    eleicoes-2022               0           407
     eleicoes-2026                0            12
     inteligencia-artificial   122             0
 

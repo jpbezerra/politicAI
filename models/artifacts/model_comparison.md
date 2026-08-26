@@ -2,7 +2,7 @@
 
 Gerado por `models_pkg.training.compare_models`, validação cruzada
 estratificada de 5 folds sobre treino+validação combinados
-(442 itens) — o conjunto de teste usado para reportar as métricas
+(432 itens) — o conjunto de teste usado para reportar as métricas
 oficiais do v0 (`models/README.md`) NÃO entra nesta comparação, para não
 "gastar" o hold-out em decisão de modelo.
 
@@ -11,10 +11,10 @@ Todos os candidatos usam o mesmo TF-IDF (config em `configs/ia_topic_classifier_
 
 | Modelo | F1 (classe IA) | ROC-AUC | Acurácia |
 |---|---|---|---|
-| regressao_logistica_v0 (produção atual) | 0.974 ± 0.001 | 1.000 ± 0.000 | 0.989 ± 0.000 |
-| naive_bayes_multinomial | 0.688 ± 0.097 | 1.000 ± 0.001 | 0.896 ± 0.026 |
-| svm_linear_calibrado | 0.974 ± 0.001 | 1.000 ± 0.000 | 0.989 ± 0.000 |
-| gradient_boosting_hist | 0.974 ± 0.016 | 0.997 ± 0.004 | 0.989 ± 0.007 |
+| regressao_logistica_v0 (produção atual) | 0.974 ± 0.018 | 1.000 ± 0.000 | 0.988 ± 0.007 |
+| naive_bayes_multinomial | 0.735 ± 0.077 | 1.000 ± 0.000 | 0.907 ± 0.020 |
+| svm_linear_calibrado | 0.974 ± 0.018 | 1.000 ± 0.000 | 0.988 ± 0.007 |
+| gradient_boosting_hist | 0.979 ± 0.020 | 0.996 ± 0.007 | 0.991 ± 0.009 |
 
 ## Leitura
 
@@ -35,10 +35,10 @@ da mesma forma direta).
 
 ```
 Validação cruzada estratificada, 5 folds (seed=42):
-  acuracia: 0.989 ± 0.000  (folds: [0.9888, 0.9888, 0.9886, 0.9886, 0.9886])
-  f1_ia: 0.974 ± 0.001  (folds: [0.9744, 0.9744, 0.9756, 0.973, 0.973])
-  precisao_ia: 0.990 ± 0.019  (folds: [1.0, 1.0, 0.9524, 1.0, 1.0])
-  recall_ia: 0.959 ± 0.021  (folds: [0.95, 0.95, 1.0, 0.9474, 0.9474])
+  acuracia: 0.988 ± 0.007  (folds: [0.9885, 0.9885, 0.9884, 1.0, 0.9767])
+  f1_ia: 0.974 ± 0.018  (folds: [0.9744, 0.9744, 0.9744, 1.0, 0.9444])
+  precisao_ia: 0.990 ± 0.020  (folds: [1.0, 1.0, 0.95, 1.0, 1.0])
+  recall_ia: 0.959 ± 0.039  (folds: [0.95, 0.95, 1.0, 1.0, 0.8947])
   roc_auc: 1.000 ± 0.000  (folds: [1.0, 1.0, 1.0, 1.0, 1.0])
 ```
 
@@ -46,21 +46,21 @@ Validação cruzada estratificada, 5 folds (seed=42):
 
 ```
 Validação cruzada estratificada, 5 folds (seed=42):
-  acuracia: 0.896 ± 0.026  (folds: [0.8989, 0.8876, 0.8523, 0.9091, 0.9318])
-  f1_ia: 0.688 ± 0.097  (folds: [0.7097, 0.6667, 0.5185, 0.7333, 0.8125])
+  acuracia: 0.907 ± 0.020  (folds: [0.9195, 0.908, 0.907, 0.9302, 0.8721])
+  f1_ia: 0.735 ± 0.077  (folds: [0.7879, 0.75, 0.7333, 0.8125, 0.5926])
   precisao_ia: 1.000 ± 0.000  (folds: [1.0, 1.0, 1.0, 1.0, 1.0])
-  recall_ia: 0.533 ± 0.109  (folds: [0.55, 0.5, 0.35, 0.5789, 0.6842])
-  roc_auc: 1.000 ± 0.001  (folds: [1.0, 0.9986, 1.0, 1.0, 1.0])
+  recall_ia: 0.587 ± 0.091  (folds: [0.65, 0.6, 0.5789, 0.6842, 0.4211])
+  roc_auc: 1.000 ± 0.000  (folds: [1.0, 1.0, 1.0, 1.0, 0.9992])
 ```
 
 ### svm_linear_calibrado
 
 ```
 Validação cruzada estratificada, 5 folds (seed=42):
-  acuracia: 0.989 ± 0.000  (folds: [0.9888, 0.9888, 0.9886, 0.9886, 0.9886])
-  f1_ia: 0.974 ± 0.001  (folds: [0.9744, 0.9744, 0.9756, 0.973, 0.973])
-  precisao_ia: 0.990 ± 0.019  (folds: [1.0, 1.0, 0.9524, 1.0, 1.0])
-  recall_ia: 0.959 ± 0.021  (folds: [0.95, 0.95, 1.0, 0.9474, 0.9474])
+  acuracia: 0.988 ± 0.007  (folds: [0.9885, 0.9885, 0.9884, 1.0, 0.9767])
+  f1_ia: 0.974 ± 0.018  (folds: [0.9744, 0.9744, 0.9744, 1.0, 0.9444])
+  precisao_ia: 0.990 ± 0.020  (folds: [1.0, 1.0, 0.95, 1.0, 1.0])
+  recall_ia: 0.959 ± 0.039  (folds: [0.95, 0.95, 1.0, 1.0, 0.8947])
   roc_auc: 1.000 ± 0.000  (folds: [1.0, 1.0, 1.0, 1.0, 1.0])
 ```
 
@@ -68,10 +68,10 @@ Validação cruzada estratificada, 5 folds (seed=42):
 
 ```
 Validação cruzada estratificada, 5 folds (seed=42):
-  acuracia: 0.989 ± 0.007  (folds: [0.9888, 0.9888, 0.9773, 0.9886, 1.0])
-  f1_ia: 0.974 ± 0.016  (folds: [0.9744, 0.9744, 0.95, 0.973, 1.0])
-  precisao_ia: 0.990 ± 0.020  (folds: [1.0, 1.0, 0.95, 1.0, 1.0])
-  recall_ia: 0.959 ± 0.020  (folds: [0.95, 0.95, 0.95, 0.9474, 1.0])
-  roc_auc: 0.997 ± 0.004  (folds: [0.9935, 1.0, 0.9912, 1.0, 1.0])
+  acuracia: 0.991 ± 0.009  (folds: [1.0, 1.0, 0.9767, 0.9884, 0.9884])
+  f1_ia: 0.979 ± 0.020  (folds: [1.0, 1.0, 0.9474, 0.9744, 0.973])
+  precisao_ia: 0.979 ± 0.025  (folds: [1.0, 1.0, 0.9474, 0.95, 1.0])
+  recall_ia: 0.979 ± 0.026  (folds: [1.0, 1.0, 0.9474, 1.0, 0.9474])
+  roc_auc: 0.996 ± 0.007  (folds: [1.0, 1.0, 0.9984, 1.0, 0.9827])
 ```
 

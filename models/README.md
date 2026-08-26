@@ -79,10 +79,14 @@ conveniência, a escolha do modelo de produção — ver
 
 | Modelo | F1 (classe IA) | ROC-AUC | Acurácia |
 |---|---|---|---|
-| regressao_logistica_v0 (produção atual) | 0.974 ± 0.001 | 1.000 ± 0.000 | 0.989 ± 0.000 |
-| naive_bayes_multinomial | 0.688 ± 0.097 | 1.000 ± 0.001 | 0.896 ± 0.026 |
-| svm_linear_calibrado | 0.974 ± 0.001 | 1.000 ± 0.000 | 0.989 ± 0.000 |
-| gradient_boosting_hist | 0.974 ± 0.016 | 0.997 ± 0.004 | 0.989 ± 0.007 |
+| regressao_logistica_v0 (produção atual) | 0.974 ± 0.018 | 1.000 ± 0.000 | 0.988 ± 0.007 |
+| naive_bayes_multinomial | 0.735 ± 0.077 | 1.000 ± 0.000 | 0.907 ± 0.020 |
+| svm_linear_calibrado | 0.974 ± 0.018 | 1.000 ± 0.000 | 0.988 ± 0.007 |
+| gradient_boosting_hist | 0.979 ± 0.020 | 0.996 ± 0.007 | 0.991 ± 0.009 |
+
+(Números pós-recorte de 01/01/2022 a 20/08/2026, ver `docs/PRD.md`, Seção 19 —
+a tabela mudou pouco em relação ao histórico completo, já que o recorte
+removeu só ~12% da amostra.)
 
 A regressão logística permanece o modelo de produção: desempenho
 estatisticamente indistinguível do gradient boosting e do SVM calibrado
@@ -104,19 +108,20 @@ o que já consumia esses caminhos (`api/main.py`, `predictor.py`).
 
 ## Resultados do classificador v0 (dados reais, não simulados)
 
-Treinado em 553 itens do Dataset B (rótulo editorial real), split
-estratificado 72%/8%/20% (treino/val/teste), regressão logística sobre
+Treinado em 541 itens do Dataset B (rótulo editorial real, já restrito a
+checagens entre 01/01/2022 e 20/08/2026 — ver `docs/PRD.md`, Seção 19), split
+estratificado 72%/8%/20% (432 treino, 109 teste), regressão logística sobre
 TF-IDF (unigrama+bigrama), com calibração de probabilidade. Métricas no
 conjunto de teste (hold-out, nunca visto no treino/tuning/CV):
 
 | Classe | Precisão | Recall | F1 | N |
 |---|---|---|---|---|
-| IA | 0.96 | 1.00 | 0.98 | 24 |
-| Tradicional | 1.00 | 0.99 | 0.99 | 87 |
+| IA | 0.96 | 1.00 | 0.98 | 25 |
+| Tradicional | 1.00 | 0.99 | 0.99 | 84 |
 
 Acurácia geral: 0.99; ROC-AUC: 1.00. A validação cruzada estratificada (5
 folds sobre treino+validação, seed=42) dá uma leitura mais defensável dessa
-mesma classe: F1 da classe IA 0.974 ± 0.018, acurácia 0.989 ± 0.007 — a
+mesma classe: F1 da classe IA 0.979 ± 0.021, acurácia 0.991 ± 0.009 — a
 faixa entre folds, não só o ponto único do teste, é o que deve ser citado
 como estimativa de desempenho. **Mesmo assim, estes números são altos demais
 para serem interpretados como "o modelo está pronto para produção geral"**
@@ -176,10 +181,14 @@ usada na coleta do Dataset B:
 
 ```
 tag_pesquisa               IA   Tradicional
-eleicoes-2022                0          419
+eleicoes-2022                0          407
 eleicoes-2026                 0           12
 inteligencia-artificial   122            0
 ```
+
+(Números já refletindo o recorte de 01/01/2022 a 20/08/2026, `docs/PRD.md`
+Seção 19 — `eleicoes-2022` era 419 antes do recorte; a colinearidade em si
+não muda, só o N da baseline "Tradicional".)
 
 Isso é consistente com o rótulo refletir o tema real dos textos (quem
 pesquisou "inteligência artificial" no Aos Fatos encontrou artigos sobre

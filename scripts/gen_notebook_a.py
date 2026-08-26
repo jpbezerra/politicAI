@@ -18,8 +18,10 @@ md(r"""# Dataset A — Coalizão Fato ou Boato (TSE): EDA descritiva
 Total: **322 checagens reais**, de 11/10/2018 a 31/07/2026, coletadas via navegação real (Claude in Chrome) em 23/08/2026 e reproduzidas em `raw_scrape_dataset_a_tse.py` + `raw_scrape_dataset_a_extra_tags.py` / `dataset_a_fato_ou_boato_completo.csv`. Nenhum dado sintético foi usado nesta versão do notebook.
 
 **Limitações honestas da coleta (importantes para a leitura dos resultados):**
-- O site não expõe veredito, agência responsável ou tags temáticas como texto estruturado por item na listagem — apenas título, resumo e data. O veredito visual (selo "FALSO"/"BOATO"/"GOLPE") é uma imagem, não texto, e não foi possível extraí-lo sem OCR.
-- Por isso, `veredito_estimado`, `rotulo_ia`, `categoria_macro`, `alvo_ataque` e `vetor_midia` abaixo são **heurísticas textuais** (regras sobre título + resumo), não classificações oficiais da fonte — precisam de validação manual antes de qualquer teste inferencial definitivo (Fase 3).
+- O site não expõe veredito, agência responsável ou tags temáticas como texto estruturado por item na página de LISTAGEM — apenas título, resumo e data. O selo visual ("FALSO"/"BOATO"/"GOLPE") mostrado ali é mesmo uma imagem, não texto.
+- **Mas a página INDIVIDUAL de cada checagem, quando usa o template mais recente do site, traz o veredito como texto real** num parágrafo "Por que é boato?"/"Por que é distorcido" — sem precisar de OCR (Seção 3.2 detalha a descoberta e a coleta). Isso cobre 77 dos 322 itens (23,9%); para os demais 245, o template da página não tem essa seção (240 casos) ou a página não pôde ser localizada (5 casos), e o veredito continua vindo só da heurística de título.
+- `veredito_final` (Seção 3.2) usa o texto real da página quando ele existe e cai para a heurística de título (`veredito_estimado`) como *fallback* nos outros casos — sempre com a proveniência marcada em `fonte_veredito_final`, nunca misturando as duas fontes sem rótulo.
+- `rotulo_ia`, `categoria_macro`, `alvo_ataque` e `vetor_midia` abaixo continuam sendo **heurísticas textuais** (regras sobre título + resumo), não classificações oficiais da fonte — precisam de validação manual antes de qualquer teste inferencial definitivo (Fase 3).
 - A tag "fake news" é uma entre ~68 tags do site; ela não cobre 100% do acervo (462 checagens no total, sem filtro) — o recorte aqui prioriza precisão temática (desinformação eleitoral) sobre cobertura total.
 """)
 
@@ -43,9 +45,33 @@ md("## 1. Carga dos dados reais")
 
 code(r"""
 df = pd.read_csv("../data/processed/dataset_a_fato_ou_boato_completo.csv", parse_dates=["data_publicacao_checagem"])
-print(f"Linhas: {len(df)} | Colunas: {list(df.columns)}")
+print(f"Linhas antes do recorte temporal: {len(df)} | Colunas: {list(df.columns)}")
 print(df["fonte_tag"].value_counts())
 df.head(3)
+""")
+
+md("""## 1.1 Recorte temporal (1º de janeiro de 2022 a 20 de agosto de 2026)
+
+A pedido da orientadora, a análise deste projeto passou a considerar só checagens
+publicadas entre 1º de janeiro de 2022 e 20 de agosto de 2026 — decisão tomada
+para simplificar o projeto em torno do ciclo eleitoral de 2026 (a janela cobre o
+ciclo de 2022 completo, usado como referência/comparação, até a data mais recente
+de coleta). **O corte é só neste notebook e nos demais artefatos
+processados/de treino — os arquivos brutos em `data/raw/` (inclusive
+`dataset_a_fato_ou_boato_completo.csv`, que já é um merge sem enriquecimento dos
+dois CSVs de `data/raw/`) permanecem intactos, com o histórico completo desde
+2018, para preservar a proveniência original da coleta.**""")
+
+code(r"""
+CORTE_INICIO = "2022-01-01"
+CORTE_FIM = "2026-08-20"  # inclusivo -- comparado contra o dia seguinte para não depender de
+                           # nenhum item ter ou não componente de hora (ver mesmo cuidado em
+                           # gen_notebook_b.py, onde isso de fato mudava a contagem).
+n_antes = len(df)
+corte_fim_exclusivo = (pd.Timestamp(CORTE_FIM) + pd.Timedelta(days=1))
+df = df[(df["data_publicacao_checagem"] >= CORTE_INICIO) & (df["data_publicacao_checagem"] < corte_fim_exclusivo)].reset_index(drop=True)
+print(f"Linhas após o recorte ({CORTE_INICIO} a {CORTE_FIM}, inclusive): {len(df)} de {n_antes} originais")
+print(df["data_publicacao_checagem"].dt.year.value_counts().sort_index())
 """)
 
 md("""## 2. Limpeza e tratamento de valores ausentes
@@ -169,6 +195,61 @@ df["veredito_estimado"].value_counts()
 """)
 
 md("""Cobertura mais que dobrou (24,5% → ~56%) com três correções pequenas e bem documentadas — um exemplo concreto de por que vale a pena olhar a distribuição de "não classificados" em vez de aceitar o resultado da primeira tentativa. Os ~44% restantes seguem sem classificação porque apresentam a alegação falsa como se fosse um fato positivo (ex.: "Boletim de urna com 9.909 votos... é montagem" — a negação vem no meio/fim do título, não no começo), exigindo leitura mais profunda do que um padrão de abertura consegue capturar — mantido como limitação explícita na Seção 7.""")
+
+md(r"""### 3.2.1 Veredito real extraído da página individual (dado real, não heurística)
+
+O usuário do projeto observou que muitas checagens do TSE trazem um parágrafo
+"Por que é boato?" / "Por que é distorcido" na página INDIVIDUAL de cada item
+(diferente da listagem, que só mostra o selo como imagem) e perguntou se isso
+dispensava OCR. Inspecionando exemplos reais, confirmamos que sim: quando
+presente, é HTML real (`<article>.textContent`), nunca uma imagem.
+
+A coleta completa está documentada em `raw_scrape_dataset_a_veredito_paginas.py`
+(reconstrução da URL de cada checagem por slugificação do título + busca no
+site como *fallback* em 2 níveis, via `fetch()` same-origin injetado numa aba
+real do Claude in Chrome — o sandbox deste projeto não tem acesso de rede
+direto ao domínio do TSE) e mesclada aos 322 itens ORIGINAIS (sem recorte
+temporal) em `merge_verdito_real_dataset_a.py`, chegando já pronta nas colunas
+`metodo_localizacao_pagina`, `url_checagem_individual`, `veredito_texto_pagina`
+e `fonte_veredito_pagina` carregadas na Seção 1.
+
+**Isto não é universal** — é uma característica do template usado por cada
+página, não do conteúdo: checagens mais recentes (majoritariamente 2023-2026)
+tendem a ter essa seção; checagens mais antigas (majoritariamente 2018-2022,
+formato narrativo) costumam expressar o veredito em prosa livre (ex.: "Essa
+informação é FALSA!"), sem o cabeçalho padronizado, e por isso não são
+capturadas pelo regex — não é um erro de extração, é uma seção que
+genuinamente não existe nessas páginas.""")
+
+code(r"""
+print("Como cada um dos 322 itens originais foi resolvido (antes do recorte temporal):")
+print(pd.read_csv("../data/processed/dataset_a_fato_ou_boato_completo.csv")["metodo_localizacao_pagina"].value_counts())
+
+print("\nDentro do recorte 2022-2026 já aplicado a `df` (n=%d):" % len(df))
+print(df["fonte_veredito_pagina"].value_counts())
+cobertura_real = (df["fonte_veredito_pagina"] == "texto_real_pagina_individual").mean() * 100
+print(f"\nVeredito real (texto da página) disponível para {cobertura_real:.1f}% dos itens deste recorte")
+df.loc[df["veredito_texto_pagina"].notna() & (df["veredito_texto_pagina"] != ""), "veredito_texto_pagina"].value_counts()
+""")
+
+md(r"""**`veredito_final`: usa o dado real quando existe, cai para a heurística de título como *fallback* — sempre com a fonte marcada.** Nunca mistura os dois sem rótulo: `fonte_veredito_final` diz, item a item, qual dos dois métodos gerou o valor.""")
+
+code(r"""
+def veredito_final_e_fonte(row):
+    if row["fonte_veredito_pagina"] == "texto_real_pagina_individual":
+        return pd.Series({
+            "veredito_final": row["veredito_texto_pagina"].capitalize(),
+            "fonte_veredito_final": "texto_real_pagina_individual",
+        })
+    return pd.Series({
+        "veredito_final": row["veredito_estimado"],
+        "fonte_veredito_final": "heuristica_regex_titulo",
+    })
+
+df[["veredito_final", "fonte_veredito_final"]] = df.apply(veredito_final_e_fonte, axis=1)
+print(df["fonte_veredito_final"].value_counts())
+df["veredito_final"].value_counts()
+""")
 
 md("""### 3.3 Categoria temática macro (a partir de título + resumo)
 Sem acesso às tags oficiais por item nesta coleta, aproximamos a categoria macro por palavras-chave — mapeamento alinhado ao vocabulário real de 68 tags do próprio site (urna, biometria, código-fonte, mesário, apuração, totalização, candidatos, etc.).""")
@@ -412,7 +493,7 @@ df.drop(columns=["texto_norm"]).sample(5, random_state=7)
 md(r"""## 7. Limitações e próximos passos
 
 - **`rotulo_ia`/`rotulo_ia_bin` são não-informativos neste recorte (n_IA=0)** — investigado na Seção 3.1.1 com vocabulário ampliado, não é um problema de regex estreito. O Dataset B é a fonte primária para o rótulo IA vs. Tradicional; aqui o teste da Seção 4 é mantido só para registrar o resultado nulo com transparência.
-- **Veredito, categoria, alvo de ataque e vetor de mídia continuam heurísticos.** A heurística de veredito foi revisada nesta versão (cobertura de 24,5% → ~56% após corrigir um erro de concordância de gênero, remover o prefixo "Eleições AAAA:" antes de classificar, e adicionar uma categoria de negação implícita — Seção 3.2) mas ainda não é uma classificação oficial. Antes da Fase 3 (testes formais de H1–H5), uma amostra deve ser revisada manualmente para medir a taxa de acerto dessas regras (ex.: Cohen's kappa entre a heurística e uma checagem humana).
+- **Veredito agora é parcialmente real, não 100% heurístico.** `veredito_final` (Seção 3.2.1) usa o texto real extraído do parágrafo "Por que é X" da página individual para 23,9% dos 322 itens originais (77/322) — dado real do TSE, não estimativa. Para os outros ~76,1% (240 páginas sem essa seção no template + 5 não localizadas), `veredito_final` cai para a heurística de título (`veredito_estimado`, cobertura de 24,5% → ~56% dentro desse subconjunto, após corrigir um erro de concordância de gênero, remover o prefixo "Eleições AAAA:" antes de classificar, e adicionar uma categoria de negação implícita — Seção 3.2). `fonte_veredito_final` marca, item a item, qual das duas fontes foi usada — nenhuma análise deve tratar as duas como equivalentes sem checar essa coluna. A parte heurística ainda não é uma classificação oficial e, antes da Fase 3 (testes formais de H1–H5), uma amostra deveria ser revisada manualmente para medir a taxa de acerto dessas regras (ex.: Cohen's kappa entre a heurística e uma checagem humana). `categoria_macro`, `alvo_ataque` e `vetor_midia` continuam 100% heurísticos.
 - **Sem métricas de engajamento nesta fonte.** O TSE não publica alcance/compartilhamentos — H1 (velocidade/engajamento) depende do cruzamento com o Dataset B na Fase 3.
 - **Cobertura do site:** 322 dos 462 itens totais (267 da tag "fake news" + 55 novos de 7 tags adicionais tematicamente relacionadas). Os ~140 itens ainda fora deste recorte são majoritariamente alertas de golpes financeiros/phishing (ex.: cobrança falsa de CNPJ de campanha, "Meu Título Digital") — fora do escopo de desinformação eleitoral do estudo, não de negligência na coleta.
 - **Tags adicionais não introduzem viés de seleção detectável** — a checagem da Seção 4.1 não encontrou diferença significativa de categoria temática ou tamanho de texto entre a tag "fake news" e as 7 tags adicionais, sugerindo que os 55 itens novos são uma continuação natural da mesma população. Ainda assim, todas as 8 tags vêm do mesmo agregador e das mesmas 10 agências parceiras, então a expansão aumenta o volume mas não diversifica a fonte — para isso, o Dataset B (Aos Fatos) continua sendo o complemento necessário.

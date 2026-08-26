@@ -49,10 +49,39 @@ Carregamos `dataset_b_completo.csv` (gerado por `scripts/build_dataset_b_complet
 code(r"""
 df = pd.read_csv("../data/raw/dataset_b_completo.csv", keep_default_na=False,
                   parse_dates=["data_publicacao_iso"])
-print(f"Linhas: {len(df)} | Colunas: {list(df.columns)}")
+print(f"Linhas antes do recorte temporal: {len(df)} | Colunas: {list(df.columns)}")
 print(f"\nItens com data de publicação capturada: {df['data_publicacao_iso'].notna().sum()}/{len(df)}")
-print(f"Intervalo de datas: {df['data_publicacao_iso'].min()} a {df['data_publicacao_iso'].max()}")
+print(f"Intervalo de datas (bruto, sem recorte): {df['data_publicacao_iso'].min()} a {df['data_publicacao_iso'].max()}")
 df.head(3)
+""")
+
+md("""## 1.1 Recorte temporal (1º de janeiro de 2022 a 20 de agosto de 2026)
+
+A pedido da orientadora, a análise deste projeto passou a considerar só checagens
+publicadas entre 1º de janeiro de 2022 e 20 de agosto de 2026 — decisão tomada
+para simplificar o projeto em torno do ciclo eleitoral de 2026, cobrindo também
+o ciclo de 2022 completo como referência/comparação. Todos os 122 itens
+rotulados "IA" já caem dentro dessa janela (a tag só começou a ser usada em
+março de 2023), então o corte não perde nenhum item positivo — só remove os
+12 itens de antes de 2022 da baseline "Tradicional". **O corte é só neste
+notebook e nos demais artefatos processados/de treino — `data/raw/dataset_b_completo.csv`
+e os 3 CSVs de `data/raw/dataset_b_completo_<tag>.csv` permanecem intactos, com o
+histórico completo, para preservar a proveniência original da coleta.**""")
+
+code(r"""
+CORTE_INICIO = "2022-01-01"
+CORTE_FIM = "2026-08-20"  # inclusivo -- comparado contra o dia seguinte (ver abaixo) porque
+                           # data_publicacao_iso tem hora:minuto, e "<= 2026-08-20" sozinho
+                           # comparado a um timestamp (ex.: "2026-08-20 15:57:00") seria
+                           # interpretado como "<= 2026-08-20 00:00:00" e excluiria itens
+                           # publicados durante o próprio dia 20 -- bug encontrado e corrigido
+                           # nesta mesma rodada, ao conferir a contagem esperada de itens IA.
+n_antes = len(df)
+corte_fim_exclusivo = (pd.Timestamp(CORTE_FIM) + pd.Timedelta(days=1))
+df = df[(df["data_publicacao_iso"] >= CORTE_INICIO) & (df["data_publicacao_iso"] < corte_fim_exclusivo)].reset_index(drop=True)
+print(f"Linhas após o recorte ({CORTE_INICIO} a {CORTE_FIM}, inclusive): {len(df)} de {n_antes} originais")
+print(df["data_publicacao_iso"].dt.year.value_counts().sort_index())
+print(df["tag_pesquisa"].value_counts())
 """)
 
 md("""## 2. Limpeza e tratamento de valores ausentes

@@ -40,14 +40,19 @@ export default function MetodologiaPage() {
       </p>
       <ul>
         <li>
-          <strong>Dataset A</strong> — 322 itens do sistema &ldquo;Fato ou
-          Boato&rdquo; da Justiça Eleitoral, cobrindo o ciclo 2018–2022. Não
-          tem rótulo editorial de IA (0 itens rotulados IA nesta fonte).
+          <strong>Dataset A</strong> — 228 itens do sistema &ldquo;Fato ou
+          Boato&rdquo; da Justiça Eleitoral, publicados entre 01/01/2022 e
+          20/08/2026 (recorte temporal aplicado a pedido da orientadora do
+          projeto — a coleta completa tem 322 itens, de 2018 em diante; ver{" "}
+          <code>docs/PRD.md</code>, Seção 19). Não tem rótulo editorial de IA
+          (0 itens rotulados IA nesta fonte).
         </li>
         <li>
-          <strong>Dataset B</strong> — 553 itens de checagens do Aos Fatos,
+          <strong>Dataset B</strong> — 541 itens de checagens do Aos Fatos no
+          mesmo período (01/01/2022 a 20/08/2026; a coleta completa tem 553),
           incluindo a tag editorial de IA (122 itens rotulados como
-          relacionados a conteúdo gerado/manipulado por IA).
+          relacionados a conteúdo gerado/manipulado por IA — nenhum item foi
+          perdido nesse grupo pelo recorte).
         </li>
       </ul>
       <p>

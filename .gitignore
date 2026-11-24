@@ -36,3 +36,6 @@ web/next-env.d.ts
 
 # Python egg-info gerado por `pip install -e .` (/models)
 models/src/*.egg-info/
+
+# Material de apresentacao (nao versionar)
+.secrets/

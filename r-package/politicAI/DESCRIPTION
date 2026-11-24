@@ -1,0 +1,21 @@
+Package: politicAI
+Title: Dados do Estudo sobre Desinformacao Eleitoral Assistida por IA no Brasil
+Version: 0.1.0
+Authors@R: c(
+    person("Joao Pedro", "Bezerra de Melo Teixeira de Lima", role = c("aut", "cre"),
+           email = "joao.pedro@fhdataanalysis.com"),
+    person("Maria do Carmo", "Soares de Lima", role = "aut"))
+Description: Distribui os conjuntos de dados reais do estudo sobre checagens de
+    desinformacao eleitoral ligadas a inteligencia artificial: Fato ou Boato (TSE,
+    228 registros), Aos Fatos (541 registros) e a base unificada (769 registros),
+    recorte de janeiro de 2022 a agosto de 2026, coleta de 23/08/2026.
+    Inclui tambem os resultados dos testes de robustez. Formato e alvo sao
+    estimados por dicionarios de palavras e ainda nao foram validados por
+    codificadores humanos.
+License: CC BY 4.0
+URL: https://github.com/jpbezerra/politicAI
+Encoding: UTF-8
+Language: pt-BR
+Depends: R (>= 3.5.0)
+Suggests: jsonlite, testthat (>= 3.0.0)
+Config/testthat/edition: 3

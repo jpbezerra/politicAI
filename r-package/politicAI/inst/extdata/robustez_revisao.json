@@ -1,0 +1,1178 @@
+{
+ "H1_formato_titulo": {
+  "chi2": 61.11088985146417,
+  "gl": 4,
+  "p": 1.6943892393667647e-12,
+  "n": 541,
+  "V": 0.3360939317570155,
+  "pct_celulas_esp_menor_5": 20.0,
+  "n_celulas_esp_menor_5": 2,
+  "n_celulas": 10,
+  "esp_min": 2.0295748613678373,
+  "tabela": {
+   "IA": {
+    "audio": 2,
+    "imagem": 27,
+    "indeterminado": 36,
+    "texto": 1,
+    "video": 56
+   },
+   "Tradicional": {
+    "audio": 7,
+    "imagem": 17,
+    "indeterminado": 254,
+    "texto": 8,
+    "video": 133
+   }
+  },
+  "p_permutacao": 9.999000099990002e-05,
+  "V_IC95_bootstrap": [
+   0.2575779035876139,
+   0.42975343179678405
+  ]
+ },
+ "H1_formato_corpo": {
+  "chi2": 32.4778103482586,
+  "gl": 4,
+  "p": 1.527716507931956e-06,
+  "n": 541,
+  "V": 0.2450161651020016,
+  "pct_celulas_esp_menor_5": 10.0,
+  "n_celulas_esp_menor_5": 1,
+  "n_celulas": 10,
+  "esp_min": 3.833641404805915,
+  "tabela": {
+   "IA": {
+    "audio": 0,
+    "imagem": 20,
+    "indeterminado": 1,
+    "texto": 1,
+    "video": 100
+   },
+   "Tradicional": {
+    "audio": 17,
+    "imagem": 58,
+    "indeterminado": 45,
+    "texto": 42,
+    "video": 257
+   }
+  },
+  "p_permutacao": 9.999000099990002e-05,
+  "V_IC95_bootstrap": [
+   0.20845708353833492,
+   0.2916867943219634
+  ]
+ },
+ "H2_alvo_corpo_completo": {
+  "chi2": 35.73775289876405,
+  "gl": 2,
+  "p": 1.7363831398584467e-08,
+  "n": 541,
+  "V": 0.25701885723363926,
+  "pct_celulas_esp_menor_5": 0.0,
+  "n_celulas_esp_menor_5": 0,
+  "n_celulas": 6,
+  "esp_min": 24.129390018484287,
+  "tabela": {
+   "IA": {
+    "candidato_pessoa": 32,
+    "indeterminado": 89,
+    "urna_processo": 1
+   },
+   "Tradicional": {
+    "candidato_pessoa": 86,
+    "indeterminado": 227,
+    "urna_processo": 106
+   }
+  },
+  "p_permutacao": 9.999000099990002e-05,
+  "V_IC95_bootstrap": [
+   0.21999836343439771,
+   0.29978279797660806
+  ]
+ },
+ "H2_alvo_corpo_determinados": {
+  "chi2": 28.683715449406343,
+  "gl": 1,
+  "p": 8.521732417499621e-08,
+  "n": 225,
+  "V": 0.35704786762441154,
+  "pct_celulas_esp_menor_5": 0.0,
+  "n_celulas_esp_menor_5": 0,
+  "n_celulas": 4,
+  "esp_min": 15.693333333333333,
+  "tabela": {
+   "IA": {
+    "candidato_pessoa": 32,
+    "urna_processo": 1
+   },
+   "Tradicional": {
+    "candidato_pessoa": 86,
+    "urna_processo": 106
+   }
+  },
+  "p_permutacao": 9.999000099990002e-05,
+  "V_IC95_bootstrap": [
+   0.28291062994267147,
+   0.4453166774531508
+  ]
+ },
+ "H4_veredicto_completo": {
+  "chi2": 24.89777655905674,
+  "gl": 4,
+  "p": 5.274762381974708e-05,
+  "n": 541,
+  "V": 0.2145268471108997,
+  "pct_celulas_esp_menor_5": 40.0,
+  "n_celulas_esp_menor_5": 4,
+  "n_celulas": 10,
+  "esp_min": 0.2255083179297597,
+  "tabela": {
+   "IA": {
+    "(não informado)": 1,
+    "discurso oficial": 0,
+    "distorcido": 0,
+    "falso": 121,
+    "não é bem assim": 0
+   },
+   "Tradicional": {
+    "(não informado)": 30,
+    "discurso oficial": 1,
+    "distorcido": 5,
+    "falso": 339,
+    "não é bem assim": 44
+   }
+  },
+  "p_permutacao": 9.999000099990002e-05,
+  "V_IC95_bootstrap": [
+   0.17959542880578322,
+   0.2516455207528679
+  ]
+ },
+ "H3_mannwhitney_completa": {
+  "U": 33044.0,
+  "p": 8.401263513081107e-07,
+  "mediana_IA": 140.0,
+  "mediana_Trad": -3.0,
+  "nIA": 122,
+  "nTrad": 419
+ },
+ "H3_janela_200": {
+  "U": 9924.0,
+  "p": 0.6514156402451201,
+  "nIA": 52,
+  "nTrad": 397,
+  "prob_superioridade": 0.48072079054446815,
+  "cliff_delta": -0.03855841891106371,
+  "mediana_IA": -42.0,
+  "mediana_Trad": -3.0
+ },
+ "H3_janela_180": {
+  "U": 9035.0,
+  "p": 0.7654196379226699,
+  "nIA": 47,
+  "nTrad": 395,
+  "prob_superioridade": 0.48666846215997844,
+  "cliff_delta": -0.026663075680043113,
+  "mediana_IA": -39.0,
+  "mediana_Trad": -3.0
+ },
+ "H4_falso_vs_demais_todos": {
+  "tabela": {
+   "IA": {
+    "demais": 1,
+    "falso": 121
+   },
+   "Tradicional": {
+    "demais": 80,
+    "falso": 339
+   }
+  },
+  "fisher_p": 5.44852472808837e-09,
+  "odds_ratio": 28.55457227138643,
+  "chi2": 23.369155382507042,
+  "gl": 1,
+  "p": 1.3370536777495721e-06,
+  "n": 541,
+  "V": 0.20783700505460634,
+  "pct_celulas_esp_menor_5": 0.0,
+  "n_celulas_esp_menor_5": 0,
+  "n_celulas": 4,
+  "esp_min": 18.266173752310536
+ },
+ "H4_falso_vs_demais_sem_nao_informado": {
+  "tabela": {
+   "IA": {
+    "demais": 0,
+    "falso": 121
+   },
+   "Tradicional": {
+    "demais": 50,
+    "falso": 339
+   }
+  },
+  "fisher_p": 7.855036858347391e-07,
+  "chi2": 15.820283034989336,
+  "gl": 1,
+  "p": 6.965183900695472e-05,
+  "n": 510,
+  "V": 0.1761254178524627,
+  "pct_celulas_esp_menor_5": 0.0,
+  "n_celulas_esp_menor_5": 0,
+  "n_celulas": 4,
+  "esp_min": 11.862745098039216
+ },
+ "H1_formato_titulo_so_determinados": {
+  "chi2": 18.870084863196205,
+  "gl": 3,
+  "p": 0.00029084018599071925,
+  "n": 251,
+  "V": 0.2741890241583517,
+  "pct_celulas_esp_menor_5": 25.0,
+  "n_celulas_esp_menor_5": 2,
+  "n_celulas": 8,
+  "esp_min": 3.0836653386454183,
+  "tabela": {
+   "IA": {
+    "audio": 2,
+    "imagem": 27,
+    "texto": 1,
+    "video": 56
+   },
+   "Tradicional": {
+    "audio": 7,
+    "imagem": 17,
+    "texto": 8,
+    "video": 133
+   }
+  },
+  "p_permutacao": 0.00039996000399960006
+ },
+ "H1_formato_titulo_audiovisual_binario": {
+  "tabela": {
+   "IA": {
+    "audiovisual": 58,
+    "imagem_ou_texto": 28
+   },
+   "Tradicional": {
+    "audiovisual": 140,
+    "imagem_ou_texto": 25
+   }
+  },
+  "fisher_p": 0.001888055268706373,
+  "odds_ratio": 0.36989795918367346,
+  "chi2": 9.265113423315285,
+  "gl": 1,
+  "p": 0.002335600145625841,
+  "n": 251,
+  "V": 0.19212704776612746,
+  "pct_celulas_esp_menor_5": 0.0,
+  "n_celulas_esp_menor_5": 0,
+  "n_celulas": 4,
+  "esp_min": 18.159362549800797
+ },
+ "H1_formato_corpo_so_determinados": {
+  "chi2": 19.410153699201743,
+  "gl": 3,
+  "p": 0.0002248795601021178,
+  "n": 495,
+  "V": 0.1980212910662868,
+  "pct_celulas_esp_menor_5": 12.5,
+  "n_celulas_esp_menor_5": 1,
+  "n_celulas": 8,
+  "esp_min": 4.155555555555556,
+  "tabela": {
+   "IA": {
+    "audio": 0,
+    "imagem": 20,
+    "texto": 1,
+    "video": 100
+   },
+   "Tradicional": {
+    "audio": 17,
+    "imagem": 58,
+    "texto": 42,
+    "video": 257
+   }
+  },
+  "p_permutacao": 9.999000099990002e-05
+ },
+ "H1_formato_corpo_audiovisual_binario": {
+  "tabela": {
+   "IA": {
+    "audiovisual": 100,
+    "imagem_ou_texto": 21
+   },
+   "Tradicional": {
+    "audiovisual": 274,
+    "imagem_ou_texto": 100
+   }
+  },
+  "fisher_p": 0.03883743831838613,
+  "odds_ratio": 1.7379214459506431,
+  "chi2": 3.8644300861282357,
+  "gl": 1,
+  "p": 0.049319941202653365,
+  "n": 495,
+  "V": 0.08835683033543999,
+  "pct_celulas_esp_menor_5": 0.0,
+  "n_celulas_esp_menor_5": 0,
+  "n_celulas": 4,
+  "esp_min": 29.57777777777778
+ },
+ "formato_titulo_concordancia_substring_vs_palavra_inteira_pct": 99.07578558225508,
+ "H1_formato_titulo_palavra_inteira": {
+  "chi2": 61.50423407319856,
+  "gl": 4,
+  "p": 1.4005478489630817e-12,
+  "n": 541,
+  "V": 0.3371738420542385,
+  "pct_celulas_esp_menor_5": 30.0,
+  "n_celulas_esp_menor_5": 3,
+  "n_celulas": 10,
+  "esp_min": 1.1275415896487986,
+  "tabela": {
+   "IA": {
+    "audio": 2,
+    "imagem": 27,
+    "indeterminado": 36,
+    "texto": 1,
+    "video": 56
+   },
+   "Tradicional": {
+    "audio": 6,
+    "imagem": 17,
+    "indeterminado": 259,
+    "texto": 4,
+    "video": 133
+   }
+  },
+  "p_permutacao": 9.999000099990002e-05
+ },
+ "formato_corpo_concordancia_substring_vs_palavra_inteira_pct": 97.78188539741221,
+ "formato_corpo_texto_com_contexto_n": 13,
+ "formato_corpo_texto_n": 43,
+ "H1_formato_corpo_palavra_inteira": {
+  "chi2": 32.489036409007134,
+  "gl": 4,
+  "p": 1.5196600540404166e-06,
+  "n": 541,
+  "V": 0.24505850676050375,
+  "pct_celulas_esp_menor_5": 10.0,
+  "n_celulas_esp_menor_5": 1,
+  "n_celulas": 10,
+  "esp_min": 3.3826247689463957,
+  "tabela": {
+   "IA": {
+    "audio": 0,
+    "imagem": 20,
+    "indeterminado": 1,
+    "texto": 1,
+    "video": 100
+   },
+   "Tradicional": {
+    "audio": 15,
+    "imagem": 58,
+    "indeterminado": 56,
+    "texto": 33,
+    "video": 257
+   }
+  }
+ },
+ "H1_formato_corpo_dicionario_conservador": {
+  "chi2": 32.48649426486212,
+  "gl": 4,
+  "p": 1.5214807248888477e-06,
+  "n": 541,
+  "V": 0.24504891912258303,
+  "pct_celulas_esp_menor_5": 30.0,
+  "n_celulas_esp_menor_5": 3,
+  "n_celulas": 10,
+  "esp_min": 1.3530499075785583,
+  "tabela": {
+   "IA": {
+    "audio": 0,
+    "imagem": 20,
+    "indeterminado": 2,
+    "texto": 0,
+    "video": 100
+   },
+   "Tradicional": {
+    "audio": 14,
+    "imagem": 58,
+    "indeterminado": 84,
+    "texto": 6,
+    "video": 257
+   }
+  }
+ },
+ "H1_video_vs_demais_titulo_todos": {
+  "n_IA": 122,
+  "n_Trad": 419,
+  "pct_video_IA": 45.90163934426229,
+  "pct_video_Trad": 31.742243436754176,
+  "odds_ratio": 1.8245614035087718,
+  "fisher_p": 0.004940725061315803
+ },
+ "H1_video_vs_demais_titulo_determinados": {
+  "n_IA": 86,
+  "n_Trad": 165,
+  "pct_video_IA": 65.11627906976744,
+  "pct_video_Trad": 80.60606060606061,
+  "odds_ratio": 0.44912280701754387,
+  "fisher_p": 0.00874468172032644
+ },
+ "H1_video_vs_demais_corpo_todos": {
+  "n_IA": 122,
+  "n_Trad": 419,
+  "pct_video_IA": 81.9672131147541,
+  "pct_video_Trad": 61.336515513126486,
+  "odds_ratio": 2.8652281570569507,
+  "fisher_p": 1.9237135755742557e-05
+ },
+ "H1_video_vs_demais_corpo_determinados": {
+  "n_IA": 121,
+  "n_Trad": 374,
+  "pct_video_IA": 82.64462809917356,
+  "pct_video_Trad": 68.71657754010695,
+  "odds_ratio": 2.16787103946637,
+  "fisher_p": 0.0033912924496681124
+ },
+ "H1_video_vs_demais_corpo_conservador_todos": {
+  "n_IA": 122,
+  "n_Trad": 419,
+  "pct_video_IA": 81.9672131147541,
+  "pct_video_Trad": 61.336515513126486,
+  "odds_ratio": 2.8652281570569507,
+  "fisher_p": 1.9237135755742557e-05
+ },
+ "H1_video_vs_demais_corpo_conservador_determinados": {
+  "n_IA": 120,
+  "n_Trad": 335,
+  "pct_video_IA": 83.33333333333334,
+  "pct_video_Trad": 76.71641791044776,
+  "odds_ratio": 1.517509727626459,
+  "fisher_p": 0.15463722266953833
+ },
+ "alvo_concordancia_substring_vs_palavra_inteira_sem_frase_modelo_pct": 95.87378640776699,
+ "alvo_n_sem_frase_modelo": 412,
+ "diagnostico_indeterminados": {
+  "formato_indet_B_titulo_pct": 53.60443622920518,
+  "formato_indet_B_corpo_pct": 8.502772643253234,
+  "formato_indet_A_titulo_pct": 56.14035087719298,
+  "formato_indet_C_unificado_pct": 54.35630689206762,
+  "formato_indet_C_unificado_n": 418,
+  "formato_indet_B_titulo_IA_pct": 29.508196721311474,
+  "formato_indet_B_corpo_IA_pct": 0.819672131147541,
+  "alvo_indet_B_corpo_IA_pct": 72.95081967213115,
+  "alvo_indet_B_titulo_IA_pct": 63.114754098360656,
+  "formato_indet_B_titulo_Tradicional_pct": 60.62052505966587,
+  "formato_indet_B_corpo_Tradicional_pct": 10.739856801909307,
+  "alvo_indet_B_corpo_Tradicional_pct": 54.17661097852029,
+  "alvo_indet_B_titulo_Tradicional_pct": 29.832935560859188,
+  "alvo_indet_B_corpo_pct": 58.41035120147874,
+  "alvo_indet_B_corpo_n": 316,
+  "alvo_indet_A_pct": 49.122807017543856,
+  "tema_ausente_B_n": 400,
+  "tema_ausente_B_pct": 73.93715341959334,
+  "tema_ausente_C_unificado_n": 400,
+  "tema_ausente_C_unificado_pct": 52.015604681404426,
+  "tema_ausente_por_grupo_pct": {
+   "IA": 7.377049180327869,
+   "Tradicional": 93.31742243436753
+  },
+  "tema_ausente_por_tag_pct": {
+   "eleicoes-2022": 96.06879606879608,
+   "eleicoes-2026": 0.0,
+   "inteligencia-artificial": 7.377049180327869
+  },
+  "tema_ausente_por_ano_pct": {
+   "2022": 99.73118279569893,
+   "2023": 100.0,
+   "2024": 33.33333333333333,
+   "2025": 0.0,
+   "2026": 0.0
+  },
+  "tema_ausente_por_ano_n": {
+   "2022": 372,
+   "2023": 17,
+   "2024": 36,
+   "2025": 68,
+   "2026": 48
+  },
+  "tema_ausente_x_grupo_chi2": {
+   "chi2": 357.7022874190025,
+   "p": 8.910635029162103e-80,
+   "gl": 1
+  },
+  "tema_usado_em_teste_de_hipotese": false,
+  "alvo_indeterminado_termos_mais_frequentes_titulo": [
+   [
+    "video",
+    121
+   ],
+   [
+    "lula",
+    101
+   ],
+   [
+    "bolsonaro",
+    84
+   ],
+   [
+    "falso",
+    68
+   ],
+   [
+    "mostra",
+    57
+   ],
+   [
+    "disse",
+    23
+   ],
+   [
+    "foto",
+    19
+   ],
+   [
+    "gerado",
+    16
+   ],
+   [
+    "posts",
+    15
+   ],
+   [
+    "contra",
+    14
+   ],
+   [
+    "gerada",
+    14
+   ],
+   [
+    "apoio",
+    14
+   ],
+   [
+    "brasil",
+    12
+   ],
+   [
+    "governo",
+    12
+   ],
+   [
+    "atual",
+    12
+   ],
+   [
+    "trump",
+    11
+   ],
+   [
+    "setembro",
+    11
+   ],
+   [
+    "videos",
+    9
+   ],
+   [
+    "protesto",
+    9
+   ],
+   [
+    "moraes",
+    9
+   ],
+   [
+    "2022",
+    9
+   ],
+   [
+    "audio",
+    8
+   ],
+   [
+    "homem",
+    8
+   ],
+   [
+    "eleicoes",
+    8
+   ],
+   [
+    "recente",
+    8
+   ]
+  ]
+ },
+ "holm": {
+  "p_bruto": {
+   "H1": 1.527716507931956e-06,
+   "H2": 1.7363831398584467e-08,
+   "H3": 0.6514156402451201,
+   "H4": 5.274762381974708e-05
+  },
+  "p_ajustado": {
+   "H2": 6.945532559433787e-08,
+   "H1": 4.583149523795868e-06,
+   "H4": 0.00010549524763949416,
+   "H3": 0.6514156402451201
+  }
+ },
+ "duplicatas_AxB": {
+  "pares_cos_ge_050": 9,
+  "pares_titulo_identico": 4,
+  "registros_A_distintos": 9,
+  "flagged_no_dataset_C": 9
+ },
+ "H4_sem_duplicatas_marcadas": {
+  "chi2": 25.158736528226285,
+  "gl": 4,
+  "p": 4.674437348923906e-05,
+  "n": 532,
+  "V": 0.21746461352542784,
+  "pct_celulas_esp_menor_5": 40.0,
+  "n_celulas_esp_menor_5": 4,
+  "n_celulas": 10,
+  "esp_min": 0.22932330827067668
+ },
+ "H3_sensibilidade_janelas": {
+  "60": {
+   "nIA": 17,
+   "nTrad": 259,
+   "U": 1842.5,
+   "p": 0.2607241960376453,
+   "cliff_delta": -0.16307063365886898
+  },
+  "90": {
+   "nIA": 23,
+   "nTrad": 333,
+   "U": 3626.5,
+   "p": 0.671377660488572,
+   "cliff_delta": -0.05300953127040087
+  },
+  "120": {
+   "nIA": 30,
+   "nTrad": 367,
+   "U": 5545.5,
+   "p": 0.9472206040541203,
+   "cliff_delta": 0.007356948228882887
+  },
+  "150": {
+   "nIA": 37,
+   "nTrad": 383,
+   "U": 7061.0,
+   "p": 0.972845680323102,
+   "cliff_delta": -0.003457765859854578
+  },
+  "180": {
+   "nIA": 47,
+   "nTrad": 395,
+   "U": 9035.0,
+   "p": 0.7654196379226699,
+   "cliff_delta": -0.026663075680043113
+  },
+  "200": {
+   "nIA": 52,
+   "nTrad": 397,
+   "U": 9924.0,
+   "p": 0.6514156402451201,
+   "cliff_delta": -0.03855841891106371
+  },
+  "250": {
+   "nIA": 72,
+   "nTrad": 408,
+   "U": 14452.5,
+   "p": 0.8285410161650364,
+   "cliff_delta": -0.016033496732026142
+  },
+  "300": {
+   "nIA": 85,
+   "nTrad": 414,
+   "U": 17648.5,
+   "p": 0.9650870433268622,
+   "cliff_delta": 0.003040636544472841
+  }
+ },
+ "alvo_indeterminado_atores_no_titulo": {
+  "atores": [
+   "lula",
+   "bolsonaro",
+   "trump",
+   "moraes",
+   "haddad",
+   "tarcisio",
+   "boulos",
+   "alckmin",
+   "ciro",
+   "marina silva"
+  ],
+  "resultado": {
+   "IA_indeterminado": {
+    "n": 89,
+    "com_ator_no_titulo_pct": 39.325842696629216
+   },
+   "IA_candidato_pessoa": {
+    "n": 32,
+    "com_ator_no_titulo_pct": 40.625
+   },
+   "IA_urna_processo": {
+    "n": 1,
+    "com_ator_no_titulo_pct": 0.0
+   },
+   "Tradicional_indeterminado": {
+    "n": 227,
+    "com_ator_no_titulo_pct": 68.72246696035242
+   },
+   "Tradicional_candidato_pessoa": {
+    "n": 86,
+    "com_ator_no_titulo_pct": 69.76744186046511
+   },
+   "Tradicional_urna_processo": {
+    "n": 106,
+    "com_ator_no_titulo_pct": 39.62264150943396
+   }
+  }
+ },
+ "lexico_titulos_top25": {
+  "A": [
+   [
+    "urna(s)",
+    68
+   ],
+   [
+    "voto(s)",
+    61
+   ],
+   [
+    "falso(a)",
+    42
+   ],
+   [
+    "vídeo(s)",
+    33
+   ],
+   [
+    "candidato(s/a/as)",
+    32
+   ],
+   [
+    "fraude",
+    31
+   ],
+   [
+    "tse",
+    23
+   ],
+   [
+    "votação",
+    20
+   ],
+   [
+    "eletrônicas",
+    19
+   ],
+   [
+    "presidência",
+    19
+   ],
+   [
+    "presidente",
+    14
+   ],
+   [
+    "mentira",
+    14
+   ],
+   [
+    "afirmar",
+    14
+   ],
+   [
+    "fonte",
+    13
+   ],
+   [
+    "votar",
+    12
+   ],
+   [
+    "código",
+    12
+   ],
+   [
+    "eletrônica",
+    11
+   ],
+   [
+    "tre",
+    11
+   ],
+   [
+    "teve",
+    10
+   ],
+   [
+    "turno",
+    10
+   ],
+   [
+    "seção",
+    10
+   ],
+   [
+    "gerais",
+    9
+   ],
+   [
+    "ministro",
+    9
+   ],
+   [
+    "houve",
+    9
+   ],
+   [
+    "título",
+    8
+   ]
+  ],
+  "IA": [
+   [
+    "vídeo(s)",
+    55
+   ],
+   [
+    "bolsonaro",
+    23
+   ],
+   [
+    "falso(a)",
+    23
+   ],
+   [
+    "lula",
+    23
+   ],
+   [
+    "mostra",
+    23
+   ],
+   [
+    "gerada",
+    20
+   ],
+   [
+    "gerado",
+    19
+   ],
+   [
+    "foto",
+    16
+   ],
+   [
+    "trump",
+    14
+   ],
+   [
+    "posts",
+    9
+   ],
+   [
+    "eua",
+    7
+   ],
+   [
+    "imagem",
+    7
+   ],
+   [
+    "feito",
+    6
+   ],
+   [
+    "apoio",
+    6
+   ],
+   [
+    "governo",
+    6
+   ],
+   [
+    "brasil",
+    5
+   ],
+   [
+    "moraes",
+    5
+   ],
+   [
+    "protesto",
+    5
+   ],
+   [
+    "manipulado",
+    5
+   ],
+   [
+    "golpe",
+    5
+   ],
+   [
+    "disse",
+    4
+   ],
+   [
+    "fotos",
+    4
+   ],
+   [
+    "encontro",
+    4
+   ],
+   [
+    "israel",
+    4
+   ],
+   [
+    "verdade",
+    4
+   ]
+  ],
+  "Tradicional": [
+   [
+    "lula",
+    146
+   ],
+   [
+    "vídeo(s)",
+    133
+   ],
+   [
+    "bolsonaro",
+    120
+   ],
+   [
+    "falso(a)",
+    108
+   ],
+   [
+    "mostra",
+    61
+   ],
+   [
+    "voto(s)",
+    34
+   ],
+   [
+    "urna(s)",
+    32
+   ],
+   [
+    "disse",
+    30
+   ],
+   [
+    "tse",
+    23
+   ],
+   [
+    "eleições",
+    20
+   ],
+   [
+    "governo",
+    20
+   ],
+   [
+    "fraude",
+    20
+   ],
+   [
+    "brasil",
+    19
+   ],
+   [
+    "eleição",
+    18
+   ],
+   [
+    "atual",
+    17
+   ],
+   [
+    "turno",
+    15
+   ],
+   [
+    "setembro",
+    15
+   ],
+   [
+    "dizer",
+    14
+   ],
+   [
+    "editado",
+    12
+   ],
+   [
+    "ciro",
+    12
+   ],
+   [
+    "moraes",
+    11
+   ],
+   [
+    "posts",
+    11
+   ],
+   [
+    "apoio",
+    11
+   ],
+   [
+    "ano",
+    11
+   ],
+   [
+    "homem",
+    11
+   ]
+  ]
+ },
+ "lexico_pct_titulos_com_termo": {
+  "gerad": {
+   "IA": 36.885245901639344,
+   "Tradicional": 0.0
+  },
+  "foto": {
+   "IA": 16.39344262295082,
+   "Tradicional": 3.341288782816229
+  },
+  "imagem": {
+   "IA": 5.737704918032787,
+   "Tradicional": 0.47732696897374705
+  },
+  "manipulad": {
+   "IA": 4.098360655737705,
+   "Tradicional": 0.7159904534606205
+  },
+  "vídeo": {
+   "IA": 45.08196721311475,
+   "Tradicional": 31.742243436754176
+  },
+  "lula": {
+   "IA": 18.852459016393443,
+   "Tradicional": 34.84486873508354
+  },
+  "bolsonaro": {
+   "IA": 18.852459016393443,
+   "Tradicional": 28.639618138424822
+  },
+  "tse": {
+   "IA": 0.0,
+   "Tradicional": 5.4892601431980905
+  },
+  "urna": {
+   "IA": 0.0,
+   "Tradicional": 7.637231503579953
+  },
+  "voto": {
+   "IA": 0.819672131147541,
+   "Tradicional": 8.353221957040573
+  },
+  "fraude": {
+   "IA": 0.0,
+   "Tradicional": 4.77326968973747
+  }
+ },
+ "alvo_reproducao_pipeline_pct_concordancia": 100.0,
+ "alvo_candidato_pessoa_sustentacao": {
+  "n": 118,
+  "n_so_genericos": 94,
+  "pct_so_genericos": 79.66101694915254,
+  "por_grupo": {
+   "IA": {
+    "n": 32,
+    "n_so_genericos": 24
+   },
+   "Tradicional": {
+    "n": 86,
+    "n_so_genericos": 70
+   }
+  },
+  "itens_com_termo": {
+   "carater": 3,
+   "honestidade": 0,
+   "vida pessoal": 0,
+   "familia": 61,
+   "saude": 29,
+   "corrupcao pessoal": 0,
+   "traicao": 1,
+   "diploma": 11,
+   "patrimonio pessoal": 0,
+   "morte": 27,
+   "morreu": 9
+  }
+ },
+ "H2_alvo_corpo_dicionario_conservador": {
+  "tabela": {
+   "IA": {
+    "candidato_pessoa": 8,
+    "indeterminado": 113,
+    "urna_processo": 1
+   },
+   "Tradicional": {
+    "candidato_pessoa": 15,
+    "indeterminado": 288,
+    "urna_processo": 116
+   }
+  },
+  "chi2": 40.777885302928226,
+  "gl": 2,
+  "p": 1.3969945589854388e-09,
+  "n": 541,
+  "V": 0.2745451129490919,
+  "pct_celulas_esp_menor_5": 0.0,
+  "n_celulas_esp_menor_5": 0,
+  "n_celulas": 6,
+  "esp_min": 5.186691312384474
+ },
+ "H2_alvo_corpo_conservador_determinados": {
+  "tabela": {
+   "IA": {
+    "candidato_pessoa": 8,
+    "urna_processo": 1
+   },
+   "Tradicional": {
+    "candidato_pessoa": 15,
+    "urna_processo": 116
+   }
+  },
+  "fisher_p": 1.3286804139556085e-06,
+  "odds_ratio": 61.86666666666667,
+  "chi2": 31.35852899543573,
+  "gl": 1,
+  "p": 2.145142715068151e-08,
+  "n": 140,
+  "V": 0.473275282287741,
+  "pct_celulas_esp_menor_5": 25.0,
+  "n_celulas_esp_menor_5": 1,
+  "n_celulas": 4,
+  "esp_min": 1.4785714285714286
+ },
+ "alvo_vocab_processo_binario": {
+  "pct_IA": 0.819672131147541,
+  "pct_Trad": 28.400954653937948,
+  "n_IA": 1,
+  "n_Trad": 119,
+  "fisher_p": 3.845258773002845e-14,
+  "odds_ratio": 0.020834780193068964
+ }
+}

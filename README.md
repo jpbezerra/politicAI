@@ -28,6 +28,7 @@ Este repositório cobre a **Fase 2** (coleta de dados reais e EDA dos Datasets A
 ├── .github/workflows/ci.yml                    # CI: lint+build+test de /web e pytest de /models a cada push/PR
 ├── docs/
 │   └── PRD.md                                  # PRD da Fase 3: motor de ML (/models) + plataforma (/web)
+├── r-package/politicAI/                          # pacote R com os datasets (politicai_dados()) — ver "Como obter os dados"
 ├── web/                                          # Fase 3 — plataforma Next.js (painel + Sensor de IA) — ver web/README.md
 ├── models/                                       # Fase 3 — motor de ML (classificador de temática de IA + índice de tendência) — ver models/README.md
 ├── data/
@@ -126,6 +127,37 @@ A tag `eleicoes-2022` começou como uma amostra de 7 páginas (84 itens) e foi a
 - ~~A listagem usada na coleta não expõe a data de publicação por item~~ — **resolvido.** Ver "`scrape_dataset_b_completo.py`" abaixo: a data e o texto completo de cada uma das 553 checagens foram coletados individualmente, permitindo calcular `dias_para_eleicao` e um preview real de H3/H5 no notebook 02.
 - `vetor_midia` e `alvo_ataque` (gerados no notebook 02) existem em duas versões — sobre o título e sobre o texto completo — e continuam sendo heurísticas de palavra-chave, não classificação editorial; só `rotulo_grupo` (IA vs. Tradicional) e `veredito`/`tema` são classificação editorial real. A versão de texto completo do `alvo_ataque` passou por duas rodadas de correção de contaminação lexical (nuvem de tags do rodapé, depois um quadro de metodologia padronizado do site) — ver a entrada do notebook 02 abaixo — e deve ser tratada com mais cautela que a versão de título, não menos.
 - A comparação de `dias_para_eleicao` entre os grupos IA e Tradicional tem um confundimento de desenho amostral (a tag `eleicoes-2022`, quase todo o grupo Tradicional, é um recorte por ano eleitoral; a tag `inteligencia-artificial` é um recorte por tema, sem filtro de proximidade eleitoral) — documentado em detalhe no notebook 02, Seção 4.5.
+
+## Como obter os dados
+
+Três caminhos, do mais simples ao mais completo.
+
+**1. Pacote R `politicAI`** (`r-package/politicAI/`) — os datasets prontos para uso, com datas já convertidas (`Date`/`POSIXct`):
+
+```r
+# install.packages("remotes")
+remotes::install_github("jpbezerra/politicAI", subdir = "r-package/politicAI")
+
+library(politicAI)
+d <- politicai_dados()                 # base unificada A + B: 769 checagens
+table(d$rotulo_ia, d$veredito_binario)
+politicai_dados("aos_fatos")           # Dataset B: 541 checagens (sem o texto completo)
+politicai_dados("fato_ou_boato")       # Dataset A: 228 checagens
+politicai_robustez()                   # resultados dos testes de robustez (requer jsonlite)
+```
+
+Colunas, limitações e exemplos: `?politicai_dados`. O pacote traz os dados do recorte de 1/1/2022 a 20/8/2026 (coleta de 23/08/2026) e **não** inclui o texto completo das checagens do Aos Fatos, para ficar leve; esse texto está em `data/processed/dataset_b_aosfatos_enriquecido.csv`. Para atualizar os CSVs do pacote depois de regerar os dados: `python scripts/export_r_package_data.py`.
+
+**2. CSVs diretos** — clone o repositório e leia `data/processed/` (qualquer linguagem). Em Python:
+
+```python
+import pandas as pd
+c = pd.read_csv("data/processed/dataset_c_unificado.csv", parse_dates=["data_publicacao"])
+```
+
+**3. Do zero** — reproduza a coleta e as análises com a seção "Como reproduzir", abaixo.
+
+Formato (`vetor_midia`) e alvo (`alvo_ataque`) são estimados por dicionários de palavras e ainda não foram validados por codificadores humanos; veja "Limitações" em cada notebook antes de usá-los como variável de análise.
 
 ## Notebooks
 
@@ -226,14 +258,3 @@ A partir dos Datasets A/B/C acima, a Fase 3 evolui o projeto de EDA acadêmica p
 Ambos os componentes têm testes automatizados (36 no `/models`, 16 no `/web`) validados a cada push/PR por um workflow de CI (`.github/workflows/ci.yml`) que roda `pytest`, `npm run lint`, `npm run test` e `npm run build` — ver esse arquivo para o job completo.
 
 Distinção importante que atravessa os dois componentes (detalhada no PRD, Seção 4.1): o rótulo `rotulo_grupo`/`rotulo_ia` do Dataset B indica que uma checagem é **sobre** um boato envolvendo IA — não que o texto da checagem **foi escrito por** IA. O classificador v0 resolve o primeiro problema (temática); um detector de **autoria** por IA (o que o nome "Sensor de IA" sugere de forma mais ampla) é roadmapeado para v1 e depende de uma coleta de dados nova, ainda não feita.
-
-## O que ainda falta (Fase 2/3 do roteiro)
-
-- Validação manual de uma amostra das heurísticas (`rotulo_ia`, `veredito_estimado`, `categoria_macro`, `alvo_ataque`/`alvo_ataque_texto`, `vetor_midia`/`vetor_midia_texto`) contra checagem humana, com Cohen's kappa. Três contaminações/confundimentos já foram identificados e corrigidos ao longo do projeto — a contaminação da nuvem de tags do rodapé em `alvo_ataque_texto` (notebook 02, Seção 3.5), o boilerplate de metodologia do site ("o caminho da apuração...", que colidia literalmente com uma palavra-chave de `urna_processo` — notebook 02, Seção 3.5b, descoberto na Fase 3) e o confundimento de desenho amostral em `dias_para_eleicao` (Seção 4.5) — mas a validação manual contra checagem humana continua pendente para a versão final e corrigida.
-- **Deduplicação mais agressiva entre A e B:** o notebook `03` marcou 10 pares como prováveis duplicatas (similaridade de cosseno ≥0.5) sem removê-los; a faixa 0.3–0.5 (11 pares adicionais) fica para revisão manual antes de uma deduplicação mais completa.
-- Uma coleta desenhada especificamente para isolar o efeito de H5 no grupo IA — o notebook `03` confirma, com a baseline Tradicional ampliada (753 itens de A+B), que o confundimento identificado no notebook `02` não se resolve só com mais volume de dados Tradicionais; a tag `inteligencia-artificial` em si não tem filtro de proximidade eleitoral.
-- Um modelo estatístico formal para H1/H2/H4 que declare explicitamente, como os notebooks já fazem, que só o Dataset B contribui itens rotulados IA — unificar com o Dataset A não aumenta o poder desse teste específico, só amplia a baseline Tradicional.
-- Testes estatísticos formais de H1–H5 sobre o rótulo validado.
-- **Detector de autoria por IA (v1, `/models`):** requer coletar um corpus pareado texto-humano vs. texto-gerado-por-IA sobre os mesmos temas políticos — não existe ainda neste repositório. Ver `docs/PRD.md`, Seção 4.3.
-- **Lentes de buscadores, redes sociais e institutos de pesquisa (`/web`):** aparecem no painel marcadas como "em construção" — nenhuma fonte real integrada ainda. Ver `docs/PRD.md`, Seção 5.1 e Roadmap (Seção 8).
-- Respostas às perguntas em aberto para a orientadora listadas em `docs/PRD.md`, Seção 9 (escopo público vs. restrito da plataforma, acesso a APIs de redes sociais, e se o v1 do detector de autoria é esperado até a entrega final).
